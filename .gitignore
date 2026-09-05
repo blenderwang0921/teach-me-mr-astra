@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+/build/
+/reports/
+/.cache/
+/CMakeUserPresets.json
+/compile_commands.json
+/learner/.write.lock
+/learner/.transaction.json
+*.tmp
+.DS_Store
+

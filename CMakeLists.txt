@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.25)
+project(cpp_learning_lab LANGUAGES CXX)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+include(CTest)
+if(NOT LAB_SOURCE_DIR)
+  message(STATUS "No exercise selected; use tools/lab.py prepare or check")
+  return()
+endif()
+include(cmake/LabExercise.cmake)
+lab_exercise("${LAB_SOURCE_DIR}")
+

@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "id": "exercise-id",
+  "revision": 1,
+  "template": "debugging",
+  "objectives": [
+    "REPLACE: one observable learning objective"
+  ],
+  "prerequisites": [],
+  "scenario": "REPLACE: a requirement-driven scenario.",
+  "requirements": [
+    "REPLACE: exact required behavior."
+  ],
+  "non_goals": [],
+  "cpp_standard": 20,
+  "platform": [
+    "darwin",
+    "linux"
+  ],
+  "editable_paths": [
+    "src/exercise.cpp"
+  ],
+  "provided_paths": [
+    "README.md",
+    "spec.json",
+    "include/exercise.hpp",
+    "tests/exercise_test.cpp"
+  ],
+  "acceptance_checks": [
+    {
+      "id": "required-behavior",
+      "requirement": "REPLACE: exact required behavior.",
+      "test_name": "required behavior"
+    }
+  ],
+  "seeds": [
+    17
+  ],
+  "resource_limits": {
+    "test_timeout_seconds": 10,
+    "command_timeout_seconds": 240,
+    "build_jobs": 4
+  },
+  "material_ref": null,
+  "sanitizers": [
+    "asan"
+  ]
+}

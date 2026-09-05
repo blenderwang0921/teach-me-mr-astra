@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "semantic_review": {
+    "approved": false,
+    "requirements_reviewed": [
+      "REPLACE: exact required behavior."
+    ],
+    "notes": "REPLACE after reviewing the requirements, oracle independence, and failures.",
+    "limitations": [
+      "REPLACE with actual coverage limits."
+    ],
+    "english_artifacts_checked": false
+  },
+  "skeleton_expectation": {
+    "kind": "test_failure",
+    "checks": [
+      "required-behavior"
+    ],
+    "diagnostic": null
+  },
+  "mutants": [
+    {
+      "id": "target-fault",
+      "checks": [
+        "required-behavior"
+      ]
+    }
+  ]
+}

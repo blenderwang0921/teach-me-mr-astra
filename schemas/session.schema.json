@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://learning-lab.local/schemas/session.schema.json",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "phase": {
+      "enum": [
+        "onboarding",
+        "planning",
+        "preparing",
+        "practicing",
+        "reviewing",
+        "paused",
+        "blocked"
+      ]
+    },
+    "current_exercise_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "exercise_revision": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "last_report_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "pending_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resume_phase": {
+      "enum": [
+        null,
+        "onboarding",
+        "planning",
+        "preparing",
+        "practicing",
+        "reviewing"
+      ]
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "completed_exercises": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "report_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "report_id"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "version",
+    "phase",
+    "current_exercise_id",
+    "exercise_revision",
+    "last_report_id",
+    "pending_questions",
+    "next_action",
+    "resume_phase",
+    "reason",
+    "completed_exercises"
+  ],
+  "additionalProperties": false
+}

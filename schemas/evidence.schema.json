@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://learning-lab.local/schemas/evidence.schema.json",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 1
+    },
+    "exercise_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$"
+    },
+    "exercise_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "skill": {
+      "type": "string",
+      "minLength": 1
+    },
+    "observation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "hint_level": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5
+    },
+    "teacher_interpretation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "confidence": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "supersedes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "timestamp",
+    "exercise_id",
+    "exercise_revision",
+    "skill",
+    "observation",
+    "evidence_refs",
+    "hint_level",
+    "teacher_interpretation",
+    "confidence",
+    "supersedes"
+  ],
+  "additionalProperties": false
+}

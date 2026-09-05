@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://learning-lab.local/schemas/material.schema.json",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$"
+    },
+    "source_url": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commit": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "license": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "mode": {
+      "enum": [
+        "reference",
+        "subsystem",
+        "upstream"
+      ]
+    },
+    "toolchain": {
+      "type": "object"
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "adapters": {
+      "type": "object",
+      "properties": {
+        "prepare": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "check": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reset": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "prepare",
+        "check",
+        "reset"
+      ],
+      "additionalProperties": false
+    },
+    "resource_requirements": {
+      "type": "object"
+    },
+    "learning_targets": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "validation_status": {
+      "enum": [
+        "candidate",
+        "ready",
+        "blocked"
+      ]
+    },
+    "validation_report": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "source_url",
+    "commit",
+    "license",
+    "mode",
+    "toolchain",
+    "dependencies",
+    "adapters",
+    "resource_requirements",
+    "learning_targets",
+    "prerequisites",
+    "validation_status",
+    "validation_report"
+  ],
+  "additionalProperties": false
+}

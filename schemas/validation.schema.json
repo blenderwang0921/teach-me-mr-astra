@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://learning-lab.local/schemas/validation.schema.json",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "semantic_review": {
+      "type": "object",
+      "properties": {
+        "approved": {
+          "const": true
+        },
+        "requirements_reviewed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "english_artifacts_checked": {
+          "const": true
+        }
+      },
+      "required": [
+        "approved",
+        "requirements_reviewed",
+        "notes",
+        "limitations",
+        "english_artifacts_checked"
+      ],
+      "additionalProperties": false
+    },
+    "skeleton_expectation": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "test_failure",
+            "compile_failure"
+          ]
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "diagnostic": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "checks",
+        "diagnostic"
+      ],
+      "additionalProperties": false
+    },
+    "mutants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "id",
+          "checks"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "semantic_review",
+    "skeleton_expectation",
+    "mutants"
+  ],
+  "additionalProperties": false
+}

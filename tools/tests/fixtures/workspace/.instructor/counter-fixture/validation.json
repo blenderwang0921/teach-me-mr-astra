@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "semantic_review": {
+    "approved": true,
+    "requirements_reviewed": [
+      "Return zero for an empty request.",
+      "Preserve requests within capacity.",
+      "Clamp requests above capacity."
+    ],
+    "notes": "The fixture uses direct expected values and a capacity-ignoring mutant. All paths are explicit.",
+    "limitations": [
+      "No concurrency or performance claim."
+    ],
+    "english_artifacts_checked": true
+  },
+  "skeleton_expectation": {
+    "kind": "test_failure",
+    "checks": [
+      "within",
+      "boundary"
+    ],
+    "diagnostic": null
+  },
+  "mutants": [
+    {
+      "id": "ignores-capacity",
+      "checks": [
+        "boundary"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "version": 0,
+  "phase": "onboarding",
+  "current_exercise_id": null,
+  "exercise_revision": null,
+  "last_report_id": null,
+  "pending_questions": [],
+  "next_action": "Ask a short interview before choosing a calibration exercise.",
+  "resume_phase": null,
+  "reason": null,
+  "completed_exercises": []
+}

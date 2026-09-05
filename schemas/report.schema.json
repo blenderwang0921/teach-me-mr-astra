@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://learning-lab.local/schemas/report.schema.json",
+  "type": "object",
+  "properties": {
+    "student_source_hash": {"type": ["string", "null"]},
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 1
+    },
+    "exercise_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$"
+    },
+    "exercise_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contract_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_kind": {
+      "enum": [
+        "student",
+        "reference",
+        "skeleton",
+        "mutant",
+        "validation"
+      ]
+    },
+    "toolchain": {
+      "type": "object"
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "argv": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exit_status": {
+            "type": "integer"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "log": {
+            "type": "string"
+          },
+          "timed_out": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "argv",
+          "exit_status",
+          "duration",
+          "log",
+          "timed_out"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "exit_status": {
+      "enum": [
+        0,
+        1,
+        2
+      ]
+    },
+    "test_summary": {
+      "type": "object"
+    },
+    "seeds": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "failure_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "duration": {
+      "type": "number"
+    },
+    "sanitizer": {
+      "type": "string"
+    },
+    "usage_if_available": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "outcome": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_snapshot": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "child_reports": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "student_source_hash",
+    "schema_version",
+    "id",
+    "timestamp",
+    "exercise_id",
+    "exercise_revision",
+    "source_hash",
+    "contract_hash",
+    "target_kind",
+    "toolchain",
+    "commands",
+    "exit_status",
+    "test_summary",
+    "seeds",
+    "failure_artifacts",
+    "duration",
+    "sanitizer",
+    "usage_if_available",
+    "outcome",
+    "source_snapshot",
+    "child_reports"
+  ],
+  "additionalProperties": false
+}

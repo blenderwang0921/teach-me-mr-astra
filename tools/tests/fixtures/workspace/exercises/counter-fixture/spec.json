@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "id": "counter-fixture",
+  "revision": 1,
+  "template": "implementation",
+  "objectives": [
+    "Implement an exact capacity bound"
+  ],
+  "prerequisites": [],
+  "scenario": "An admission counter must never reserve more slots than are available.",
+  "requirements": [
+    "Return zero for an empty request.",
+    "Preserve requests within capacity.",
+    "Clamp requests above capacity."
+  ],
+  "non_goals": [
+    "Concurrency",
+    "Performance benchmarking"
+  ],
+  "cpp_standard": 20,
+  "platform": [
+    "darwin",
+    "linux"
+  ],
+  "editable_paths": [
+    "src/counter.cpp"
+  ],
+  "provided_paths": [
+    "README.md",
+    "spec.json",
+    "include/counter.hpp",
+    "tests/counter_test.cpp"
+  ],
+  "acceptance_checks": [
+    {
+      "id": "empty",
+      "requirement": "Return zero for an empty request.",
+      "test_name": "empty request"
+    },
+    {
+      "id": "within",
+      "requirement": "Preserve requests within capacity.",
+      "test_name": "within capacity"
+    },
+    {
+      "id": "boundary",
+      "requirement": "Clamp requests above capacity.",
+      "test_name": "capacity boundary"
+    }
+  ],
+  "seeds": [
+    17,
+    83
+  ],
+  "resource_limits": {
+    "test_timeout_seconds": 10,
+    "command_timeout_seconds": 240,
+    "build_jobs": 4
+  },
+  "material_ref": null,
+  "sanitizers": [
+    "asan"
+  ]
+}

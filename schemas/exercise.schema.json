@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://learning-lab.local/schemas/exercise.schema.json",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "template": {
+      "enum": [
+        "implementation",
+        "debugging"
+      ]
+    },
+    "objectives": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "scenario": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "non_goals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cpp_standard": {
+      "enum": [
+        20,
+        23
+      ]
+    },
+    "platform": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "darwin",
+          "linux"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "editable_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "provided_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "acceptance_checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,79}$"
+          },
+          "requirement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "test_name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "requirement",
+          "test_name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "seeds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 4294967295
+      },
+      "uniqueItems": true
+    },
+    "resource_limits": {
+      "type": "object",
+      "properties": {
+        "test_timeout_seconds": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 600
+        },
+        "command_timeout_seconds": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "build_jobs": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "test_timeout_seconds",
+        "command_timeout_seconds",
+        "build_jobs"
+      ],
+      "additionalProperties": false
+    },
+    "material_ref": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sanitizers": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "asan",
+          "tsan"
+        ]
+      },
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "revision",
+    "template",
+    "objectives",
+    "prerequisites",
+    "scenario",
+    "requirements",
+    "non_goals",
+    "cpp_standard",
+    "platform",
+    "editable_paths",
+    "provided_paths",
+    "acceptance_checks",
+    "seeds",
+    "resource_limits",
+    "material_ref",
+    "sanitizers"
+  ],
+  "additionalProperties": false
+}
