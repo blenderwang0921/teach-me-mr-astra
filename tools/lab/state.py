@@ -1,18 +1,27 @@
 """Single-writer, revision-checked state transactions with redo recovery."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 import sys
 
-from .core import (LabError, atomic_text, contained, json_text, read_json,
-                   validate, valid_id, write_json)
+from .core import (
+    LabError,
+    atomic_text,
+    contained,
+    json_text,
+    read_json,
+    validate,
+    valid_id,
+    write_json,
+)
 
 TRANSITIONS = {
     "onboarding": {"onboarding", "planning", "paused"},
     "planning": {"planning", "preparing", "paused"},
     "preparing": {"preparing", "practicing", "blocked", "paused"},
-    "practicing": {"practicing", "reviewing", "preparing", "paused"},
+    "practicing": {"practicing", "reviewing", "preparing", "paused", "planning"},
     "reviewing": {"reviewing", "planning", "preparing", "paused"},
     "paused": {"paused"},
     "blocked": {"blocked", "preparing", "planning", "paused"},
@@ -24,12 +33,18 @@ def recover(root):
     if not journal.exists():
         return False
     pending = read_json(journal)
-    if set(pending) != {"schema_version", "files"} or pending["schema_version"] != 1 or not isinstance(pending["files"], dict):
+    if (
+        set(pending) != {"schema_version", "files"}
+        or pending["schema_version"] != 1
+        or not isinstance(pending["files"], dict)
+    ):
         raise LabError("Invalid recovery journal; preserve it and restore from backup")
     validated = []
     for relative, content in pending["files"].items():
-        if not (relative in {"learner/profile.json", "learner/session.json", "learner/evidence.jsonl"}
-                or (relative.startswith("learner/reviews/") and relative.endswith(".json"))):
+        if not (
+            relative in {"learner/profile.json", "learner/session.json", "learner/evidence.jsonl"}
+            or (relative.startswith("learner/reviews/") and relative.endswith(".json"))
+        ):
             raise LabError("Recovery journal contains an invalid state destination")
         path = contained(root, relative)
         if not isinstance(content, str):
@@ -43,7 +58,9 @@ def recover(root):
                 kind = "review" if relative.startswith("learner/reviews/") else Path(relative).stem
                 validate(kind, json.loads(content))
         except ValueError as exc:
-            raise LabError("Recovery journal contains invalid JSON; preserve it and restore from backup") from exc
+            raise LabError(
+                "Recovery journal contains invalid JSON; preserve it and restore from backup"
+            ) from exc
         validated.append((path, content))
     for path, content in validated:
         atomic_text(path, content)
@@ -52,28 +69,54 @@ def recover(root):
 
 
 def commit(root, changes):
-    write_json(contained(root, "learner/.transaction.json"), {"schema_version": 1, "files": changes})
+    write_json(
+        contained(root, "learner/.transaction.json"), {"schema_version": 1, "files": changes}
+    )
     recover(root)
 
 
 def init(root):
     defaults = {
-        "learner/profile.json": ("profile", {
-            "schema_version": 1, "goals": [], "language_standard": 20,
-            "platform": sys.platform, "time_budget": None, "preferences": {},
-            "preferred_interaction_language": "zh-TW", "self_reported_experience": [],
-        }),
-        "learner/session.json": ("session", {
-            "schema_version": 1, "version": 0, "phase": "onboarding",
-            "current_exercise_id": None, "exercise_revision": None,
-            "last_report_id": None, "pending_questions": [],
-            "next_action": "Ask a short interview before choosing a calibration exercise.",
-            "resume_phase": None, "reason": None, "completed_exercises": [],
-        }),
+        "learner/profile.json": (
+            "profile",
+            {
+                "schema_version": 1,
+                "goals": [],
+                "language_standard": 20,
+                "platform": sys.platform,
+                "time_budget": None,
+                "preferences": {},
+                "preferred_interaction_language": "zh-TW",
+                "self_reported_experience": [],
+            },
+        ),
+        "learner/session.json": (
+            "session",
+            {
+                "schema_version": 1,
+                "version": 0,
+                "phase": "onboarding",
+                "current_exercise_id": None,
+                "exercise_revision": None,
+                "last_report_id": None,
+                "pending_questions": [],
+                "next_action": "Ask a short interview before choosing a calibration exercise.",
+                "resume_phase": None,
+                "reason": None,
+                "completed_exercises": [],
+            },
+        ),
         "references/catalog.json": ("catalog", {"schema_version": 1, "materials": []}),
     }
     created = []
-    for relative in ["exercises", ".instructor", "learner/reviews", "learner/artifacts", "evidence", "references/materials"]:
+    for relative in [
+        "exercises",
+        ".instructor",
+        "learner/reviews",
+        "learner/artifacts",
+        "evidence",
+        "references/materials",
+    ]:
         contained(root, relative).mkdir(parents=True, exist_ok=True)
     for relative, (kind, value) in defaults.items():
         path = contained(root, relative)
@@ -97,7 +140,11 @@ def load_session(root):
 def read_evidence(root):
     path = contained(root, "learner/evidence.jsonl")
     try:
-        result = [validate("evidence", json.loads(line)) for line in path.read_text().splitlines() if line.strip()]
+        result = [
+            validate("evidence", json.loads(line))
+            for line in path.read_text().splitlines()
+            if line.strip()
+        ]
     except (OSError, ValueError) as exc:
         raise LabError(f"Invalid evidence log: {exc}") from exc
     ids = [item["id"] for item in result]
@@ -109,7 +156,9 @@ def read_evidence(root):
 def verify_refs(root, refs):
     for relative in refs:
         if not relative.startswith(("evidence/", "learner/artifacts/", "learner/reviews/")):
-            raise LabError(f"Evidence must reference a durable artifact, not a mutable source or log: {relative}")
+            raise LabError(
+                f"Evidence must reference a durable artifact, not a mutable source or log: {relative}"
+            )
         if not contained(root, relative).is_file():
             raise LabError(f"Missing evidence reference: {relative}")
 
@@ -121,6 +170,7 @@ def report_for(root, report_id):
 
 def audit_report(root, report_id, seen=None):
     from .core import tree_hash
+
     seen = set() if seen is None else seen
     if report_id in seen:
         return
@@ -142,7 +192,9 @@ def apply(root, update):
     validate("state-update", update)
     previous = load_session(root)
     if update["expected_version"] != previous["version"]:
-        raise LabError(f"State conflict: expected version {update['expected_version']}, current {previous['version']}")
+        raise LabError(
+            f"State conflict: expected version {update['expected_version']}, current {previous['version']}"
+        )
     session = update.get("session", dict(previous))
     if session["version"] != previous["version"] + (1 if "session" in update else 0):
         raise LabError("Submitted session.version must equal expected_version + 1")
@@ -155,7 +207,9 @@ def apply(root, update):
         raise LabError(f"Invalid phase transition: {before} -> {after}")
     if before in {"practicing", "reviewing"} and after == "preparing":
         if not update.get("reviews"):
-            raise LabError("Returning to preparing requires a review explaining the exercise defect and revision")
+            raise LabError(
+                "Returning to preparing requires a review explaining the exercise defect and revision"
+            )
     if after in {"paused", "blocked"}:
         expected_resume = previous["resume_phase"] if before in {"paused", "blocked"} else before
         if session["resume_phase"] != expected_resume or not session["reason"]:
@@ -170,33 +224,60 @@ def apply(root, update):
     if after in {"practicing", "reviewing"}:
         require_ready(root, exercise_id, revision)
     if before in {"practicing", "reviewing", "paused"} and after in {"practicing", "reviewing"}:
-        if (exercise_id, revision) != (previous["current_exercise_id"], previous["exercise_revision"]):
-            raise LabError("Return to planning/preparing before changing the active exercise revision")
+        if (exercise_id, revision) != (
+            previous["current_exercise_id"],
+            previous["exercise_revision"],
+        ):
+            raise LabError(
+                "Return to planning/preparing before changing the active exercise revision"
+            )
     if session["last_report_id"]:
         report = report_for(root, session["last_report_id"])
-        if exercise_id and (report["exercise_id"], report["exercise_revision"]) != (exercise_id, revision):
+        if exercise_id and (report["exercise_id"], report["exercise_revision"]) != (
+            exercise_id,
+            revision,
+        ):
             raise LabError("Last report belongs to a different exercise revision")
-    old_completed = {(x["id"], x["revision"], x["report_id"]) for x in previous["completed_exercises"]}
-    new_completed = {(x["id"], x["revision"], x["report_id"]) for x in session["completed_exercises"]}
+    old_completed = {
+        (x["id"], x["revision"], x["report_id"]) for x in previous["completed_exercises"]
+    }
+    new_completed = {
+        (x["id"], x["revision"], x["report_id"]) for x in session["completed_exercises"]
+    }
+    if before == "practicing" and after == "planning" and not new_completed - old_completed:
+        raise LabError("Leaving practicing for planning requires a completed review")
     if len({(x[0], x[1]) for x in new_completed}) != len(session["completed_exercises"]):
         raise LabError("Completed exercise revisions must be unique")
     if not old_completed <= new_completed:
         raise LabError("Completed exercise history is append-only")
     reviews = update.get("reviews", [])
     for item in new_completed - old_completed:
-        if before != "reviewing" or after != "planning" or item[:2] != (previous["current_exercise_id"], previous["exercise_revision"]):
+        if (
+            before not in {"practicing", "reviewing"}
+            or after != "planning"
+            or item[:2] != (previous["current_exercise_id"], previous["exercise_revision"])
+        ):
             raise LabError("Completion must be recorded when leaving the current exercise review")
         if not any((r["exercise_id"], r["exercise_revision"]) == item[:2] for r in reviews):
             raise LabError("Completion requires a review with the learner's explanation")
         if item[2] != previous["last_report_id"]:
             raise LabError("Completion must retain the current qualifying report identifier")
         latest = report_for(root, previous["last_report_id"] or "missing")
-        if latest["target_kind"] != "student" or latest["exit_status"] != 0 or latest["sanitizer"] != "required":
+        if (
+            latest["target_kind"] != "student"
+            or latest["exit_status"] != 0
+            or latest["sanitizer"] != "required"
+        ):
             raise LabError("Completion requires a successful student report")
         require_ready(root, item[0], item[1])
+        from .exercise import contract_hash
+
+        if latest["contract_hash"] != contract_hash(root, item[0]):
+            raise LabError("Passing report belongs to an older contract; check again")
         audit_report(root, latest["id"])
         from .exercise import load_exercise
         from .core import tree_hash
+
         path, _ = load_exercise(root, item[0])
         if latest["student_source_hash"] != tree_hash(path):
             raise LabError("Student source changed since the passing report; check again")
@@ -212,7 +293,9 @@ def apply(root, update):
         seen.add(entry["id"])
         history.append(entry)
     if update.get("evidence"):
-        changes["learner/evidence.jsonl"] = "".join(json.dumps(e, ensure_ascii=False) + "\n" for e in history)
+        changes["learner/evidence.jsonl"] = "".join(
+            json.dumps(e, ensure_ascii=False) + "\n" for e in history
+        )
     for review in reviews:
         verify_refs(root, review["evidence_refs"])
         relative = f"learner/reviews/{review['id']}.json"
@@ -226,7 +309,10 @@ def apply(root, update):
 def record_report(root, report):
     """Record a check without inferring mastery or changing the teaching phase."""
     session = load_session(root)
-    if (session["current_exercise_id"], session["exercise_revision"]) == (report["exercise_id"], report["exercise_revision"]):
+    if (session["current_exercise_id"], session["exercise_revision"]) == (
+        report["exercise_id"],
+        report["exercise_revision"],
+    ):
         session["version"] += 1
         session["last_report_id"] = report["id"]
         commit(root, {"learner/session.json": json_text(validate("session", session))})
@@ -234,16 +320,19 @@ def record_report(root, report):
 
 def status(root):
     from .exercise import require_ready
+
     session = load_session(root)
     issues = []
     validate("profile", read_json(contained(root, "learner/profile.json")))
     audited = set()
+
     def inspect_refs(refs):
         verify_refs(root, refs)
         for relative in refs:
             parts = Path(relative).parts
             if len(parts) == 3 and parts[0] == "evidence" and parts[2] == "summary.json":
                 audit_report(root, parts[1], audited)
+
     for entry in read_evidence(root):
         try:
             inspect_refs(entry["evidence_refs"])

@@ -1,36 +1,29 @@
-# Choose, generate, and publish one exercise
+# Author, validate, assign
 
-Read goals, recent relevant observations, and session next_action. Select one principal learning objective. Prefer a self-contained problem for v1. `references/catalog.json` starts empty; no upstream adapter is implemented.
+Use goals, recent observations and `next_action` from `context`. Choose one principal
+objective within the learner's time budget; no fixed curriculum or upstream imports.
 
-## Author assets
+1. Copy a suitable `templates/{implementation,debugging}/exercise` into a NEW
+   `exercises/ID` and its `instructor` into `.instructor/ID`. Never overwrite work.
+2. Replace all placeholders. Define a consequential scenario, exact requirements,
+   non-goals, C++20 API, editable/provided paths, platform, seeds and timeouts.
+   Map each acceptance check to an exact requirement and public Catch2 test name.
+3. Author public tests with independent expected values and deterministic concurrency
+   scheduling. Put extra tests in instructor `tests/`. Supply reference, skeleton,
+   and objective-specific mutants; each overlay contains exactly editable paths.
+4. Complete `validation.json`: semantic approval, every reviewed requirement,
+   English assets, limitations, exact skeleton failures, and expected mutant
+   detections. Compile-error debugging needs a diagnostic substring; mutant compile
+   errors never prove functional test quality. Declare ASan and applicable TSan.
+5. Format new assets before publication. Run
+   `./lab prepare ID --assign --expected-version N` from planning or the same active
+   preparing task. It enters preparing, validates, and assigns only on success.
+   Review the result; read targeted child summaries only if needed. Never publish
+   an unvalidated task. At most two automatic repairs before discussing a blocker.
+6. Link the exact editable file first, explain the task briefly, give `./lab check`,
+   and wait. Do not run the learner's failing skeleton as another student check.
 
-1. Select `templates/implementation` or `templates/debugging`. Copy its `exercise/` files into a new `exercises/<id>/` directory and its `instructor/` files into `.instructor/<id>/`. Replace every placeholder. Never copy over an existing learner workspace.
-2. Define a scenario whose constraints affect the solution, explicit requirements/non-goals, and named acceptance checks. Every check references an exact requirement string and an exact public Catch2 test name. Review non-executable requirements explicitly.
-3. Define a C++20 API (C++23 only when needed), platform, exact editable/provided file paths, fixed seeds, bounded test/command timeouts, and required sanitizers. ASan implies ASan+UBSan; declare TSan for applicable concurrency objectives after platform checks.
-4. Write public tests, a reference implementation, and one or more objective-specific mutants. Additional acceptance tests go in `.instructor/<id>/tests/`; they run against reference, mutants, and student snapshots. Use independent expected values/oracles where possible, boundary cases, reproducible failure inputs, and deterministic synchronization rather than sleep-based races.
-5. Create the learner skeleton by removing only the objective's implementation. Each `reference/`, `skeleton/`, and `mutants/<id>/` tree must contain exactly the editable file paths, including any editable design/experiment files. They overlay an isolated copy of the provided files.
-6. Complete `validation.json`: explicitly approve semantic review, list all reviewed requirements and limitations, confirm English formal assets, identify expected skeleton failures, and map each mutant to the checks that must catch it. For compile-error debugging, declare `compile_failure` and an expected compiler diagnostic substring. Mutant compile failures never prove functional test quality.
-
-The templates are deliberately unpublishable until completed. No script calls a model to fill missing content. Requirements and test names are not placeholders once a task is assigned. Report costs only when directly available; do not estimate hidden model usage from visible text.
-
-## Validate and assign
-
-Save the spec before setting the session to preparing with its id and revision. Run `prepare <id>`. Review the compact validation report, mapping, failure diagnoses, and stated limitations. The tool publishes ready only after reference/debug/sanitizer passes, exact expected skeleton behavior, and expected mutant detections. Failed preparation enters blocked when it is the active preparing task.
-
-Allow at most two automatic generation repairs. If still blocked, preserve diagnostics and explain the blocker or propose a smaller self-contained task. Do not hand over an unvalidated exercise.
-
-When ready, apply preparing → practicing and point the learner to the README and editable files. Explain how to run `check`. Wait for the learner's implementation.
-
-## Revisions and defects
-
-Do not relax acceptance because the learner failed. When the exercise is wrong, save a durable defect explanation and review, return practicing/reviewing → preparing, increment `spec.revision`, update affected assets, and revalidate. Clear an obsolete `last_report_id` when changing revisions. Preserve student work and explicitly discuss API changes that require their edits.
-
-Implementation changes only affect a run's source hash. Provided files, tests, reference/skeleton/mutants, schemas, and execution-tool changes invalidate the contract. A previously published contract cannot be republished under the same revision after such a change.
-
-
-## Avoid avoidable preparation work
-
-Verify the learner command against CLI help before publishing. Use the active
-exercise `check` default and link the actual editable file. Inspect cached dependency
-failures once before retrying; do not treat them as multiple mutant failures.
-Routine teaching updates should use compact status and avoid full report dumps.
+Provided-file/test/framework changes invalidate publication. Record defects and
+increment the revision before revalidation; preserve learner edits. Finished historical
+snapshots remain evidence even if a live ready marker becomes stale after maintenance.
+Do not revalidate old completed tasks during routine teaching; revise only if reused.

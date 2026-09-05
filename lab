@@ -1,0 +1,8 @@
+#!/bin/sh
+# Use the repository environment without activation or PATH changes.
+lab_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+if [ ! -x "$lab_root/.venv/bin/python" ]; then
+    echo 'Missing .venv; run uv sync --frozen in the repository.' >&2
+    exit 2
+fi
+exec "$lab_root/.venv/bin/python" "$lab_root/tools/lab.py" "$@"

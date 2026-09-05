@@ -34,6 +34,10 @@ jobs:
           python -m pip install uv==0.8.22
       - name: Install locked Python dependencies
         run: uv sync --frozen --python "$(command -v python)"
+      - name: Check Python style
+        run: |
+          .venv/bin/ruff format --check tools
+          .venv/bin/ruff check tools
       - name: Check environment and initialize empty state if needed
         run: |
           .venv/bin/python tools/lab.py doctor

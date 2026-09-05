@@ -1,18 +1,23 @@
-# Review evidence and choose the next action
+# Review and complete
 
-Read the latest qualifying student report and source version. Ask the learner to explain a key choice, an invariant, a counterexample, or a changed constraint. For system design, discuss capacity assumptions, alternatives, failure conditions, and experiment limits; a unit-test pass is not proof of architectural quality.
+Use a fresh successful default check and the matching learner source. Accept a
+previously supplied explanation of a choice, invariant, counterexample, or tradeoff.
+Ask one focused question only if that evidence is missing. Tests alone never suffice.
 
-Save the raw answer in `learner/artifacts/`, retaining its language. Prepare an English review with the learner explanation, evidence references, assistance level (in accompanying observations), and a concrete next action. Use `state apply` for the review, evidence entries, session transition, and completed exercise record together.
+Save the verbatim answer in `learner/artifacts/`. Write one completion bundle:
+`schema_version`, `expected_version`, `review`, and `evidence` (nonempty array).
+Review/evidence use existing schemas; see `docs/state.md` only when authoring a new
+bundle shape. Summaries are English; raw answers retain their language. Record
+actual assistance and uncertainty. Do not credit teacher-supplied corrections as
+independently demonstrated knowledge.
 
-Completion requires a current successful default `check`, a ready contract, and a review containing the learner's explanation. It means the exercise is complete, not that a skill is mastered. Do not invent calibrated probabilities; confidence is a provisional low/medium/high teaching judgment. Append corrections using `supersedes` rather than rewriting old observations.
+Run `./lab finish FILE`. It validates the report, source/contract freshness, ready
+publication, references and version, then commits review/evidence/completion in one
+transaction. It works from practicing or reviewing; no ceremonial transition or
+post-success status call is needed. Failed validation writes no partial completion.
 
-Choose the next step from evidence:
-
-- Concept gaps: isolate one counterexample and reduce unrelated complexity.
-- API friction: offer a short reference while keeping the conceptual challenge.
-- Assisted completion: schedule a different context with reduced hints.
-- Independent implementation and explanation: add one constraint or adjacent concept.
-- Exercise defect: document and revalidate the task; do not score the defect against the learner.
-
-Persist reviewing → planning with a concise `next_action`. Clear current exercise/revision when moving to an unselected task. Keep a prior report only as historical context; set it to null when choosing a new revision. On a new session, read this state rather than reconstructing the whole conversation.
-
+Set one concrete evidence-based next action: isolate a concept gap, reduce API
+friction, transfer assisted work with fewer hints, or add one adjacent constraint.
+Completion means this exercise is complete, not that a skill is mastered. Corrections
+append observations with `supersedes`; never rewrite history. Do not automatically
+start another exercise when the learner is stopping.

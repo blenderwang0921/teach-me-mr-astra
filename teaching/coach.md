@@ -1,23 +1,20 @@
-# Coach without taking over
+# Coach
 
-Read the exercise spec, relevant student changes, and the latest report. Stay within editable/provided boundaries. Do not inspect the reference just to produce a quicker answer. A failed `check` remains practicing.
+Use the current `context` result: spec, editable source, report freshness and recent
+evidence. Do not reopen the same files or reference solutions without a teaching need.
 
-Distinguish conceptual misunderstanding, unfamiliar APIs, implementation mistakes, debugging method, environment failures, and exercise defects. Exit 2 is a framework/environment/publication problem; do not record it as a learner's lack of skill.
+Diagnose concept, API, implementation, debugging method, environment, or provided-file
+defect separately. Exit 2 is a framework/environment issue, not learner weakness.
 
-Use the least assistance that helps, adjusted to the learner's request:
+Give the least useful assistance: 0 independent; 1 prediction/explanation question;
+2 counterexample/failing condition; 3 concept/API explanation; 4 partial pseudocode;
+5 full solution only on explicit request. This is not a mandatory interrogation.
+Record actual help and uncertainty; preserve raw answers first.
 
-| Level | Assistance |
-| --- | --- |
-| 0 | No hint; independent work. |
-| 1 | Ask for a prediction or an explanation of their current approach. |
-| 2 | Point to a counterexample or failing condition. |
-| 3 | Explain the relevant concept/API. |
-| 4 | Offer local pseudocode or a partial worked example. |
-| 5 | Give a complete solution only when explicitly requested. |
+When review is requested, reuse `check_reusable`; otherwise `./lab check` runs all
+required profiles on snapshots. A failing check stays practicing. Read only named
+failures and a relevant child log when needed. Do not poll while awaiting edits.
 
-This is not a mandatory sequence of interrogations. Answer direct questions and adapt pacing. Record the actual assistance supplied, not a more favorable independence level. Capture observations with the exact exercise revision and durable report/source/explanation references through `state apply`.
-
-Learners can run `check <id>` themselves or request it. Default check runs required profiles; `--preset` is diagnostic only. Tests and compile steps execute on snapshots and do not fix implementation. Explain named failing checks and read full logs only when necessary. Additional tests may reveal failure conditions without revealing a reference solution.
-
-When tests pass, move to reviewing and ask for one important tradeoff or a prediction under changed requirements. Do not mark completion from a pass alone. See `review.md`.
-
+A fresh pass plus an already supplied explanation can go directly to `finish`;
+read `review.md` once. If the explanation is missing, ask one focused question and
+use `./lab session reviewing --expected-version N --next-action '...'`.

@@ -4,6 +4,19 @@ A local C++ learning repository for rebuilding implementation, debugging, and de
 
 The learner writes the solution. The teacher chooses exercises, asks useful questions, offers hints, and checks evidence. Passing tests never automatically means mastery.
 
+
+## Daily shortcuts
+
+- Resume teaching: `./lab context --json` (the teacher reads one compact bundle).
+- Test the active exercise: `./lab check`.
+- Format framework Python: `./lab format`; verify formatting: `./lab format --check`.
+- Author then validate/assign: `./lab prepare ID --assign --expected-version N`.
+- Record a supplied explanation and completion: `./lab finish FILE`.
+
+No virtualenv activation is needed. See [formatting and automatic hooks](docs/formatting.md)
+and [state shortcuts](docs/state.md#short-commands-preferred). Use `--help` when learning
+a command, not before every repeated use.
+
 ## Setup
 
 Requirements: macOS or Linux, Python 3.11+, CMake 3.25+, Git, and a working C++20 compiler. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) if it is not already available. Ninja and Python dependencies are installed into the project environment from `uv.lock`.

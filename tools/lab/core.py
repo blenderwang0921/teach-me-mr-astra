@@ -1,4 +1,5 @@
 """Validated files, contained paths, immutable evidence, and writer coordination."""
+
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -142,4 +143,3 @@ def writer(root):
             yield
         finally:
             fcntl.flock(stream, fcntl.LOCK_UN)
-
