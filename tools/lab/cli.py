@@ -18,9 +18,11 @@ def parser():
                             ("status", "Show state, last result, and evidence integrity")]:
         child = commands.add_parser(name, help=help_text)
         child.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
+        if name == "status":
+            child.add_argument("--compact", action="store_true", help="Omit full report logs from JSON output")
     for name in ["prepare", "check"]:
         child = commands.add_parser(name, help="Validate publication" if name == "prepare" else "Test an isolated student snapshot")
-        child.add_argument("id")
+        child.add_argument("id", **({"nargs": "?", "help": "Exercise id (default: active exercise)"} if name == "check" else {}))
         child.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
         if name == "check":
             child.add_argument("--preset", choices=["debug", "release", "asan", "tsan"], help="Diagnostic-only profile; omit for a completion-eligible check")
@@ -61,6 +63,9 @@ def dispatch(args):
         elif args.command == "status":
             data = state.status(root)
             code = 2 if data["integrity_issues"] else 0
+            if args.compact and data["last_report"]:
+                report = data["last_report"]
+                data["last_report"] = {key: report[key] for key in ("id", "outcome", "exit_status", "exercise_revision", "source_snapshot")}
         elif args.command == "state":
             data, code = state.apply(root, read_json(args.file)), 0
         elif args.command == "prepare":
@@ -68,8 +73,11 @@ def dispatch(args):
             data = exercise.prepare(root, args.id)
             code = data["exit_status"]
         elif args.command == "check":
-            state.load_session(root)
-            data = exercise.check(root, args.id, args.preset)
+            session = state.load_session(root)
+            exercise_id = args.id or session["current_exercise_id"]
+            if not exercise_id:
+                raise LabError("No active exercise; use check <id> or start a learning session")
+            data = exercise.check(root, exercise_id, args.preset)
             code = data["exit_status"]
         else:
             data = ci(root)
@@ -86,6 +94,8 @@ def summarize(command, data, code):
         lines += [f"Phase: {session['phase']} | state version: {session['version']}",
                   f"Exercise: {session['current_exercise_id'] or 'none'} | revision: {session['exercise_revision']}",
                   f"Next: {session['next_action']}"]
+        if session["current_exercise_id"]:
+            lines.append(f"Workspace: exercises/{session['current_exercise_id']}/ (edit here, never evidence/)")
         lines += [f"Pending: {q}" for q in session["pending_questions"]]
         if session["reason"]:
             lines.append(f"Reason: {session['reason']}")

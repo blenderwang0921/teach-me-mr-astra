@@ -198,6 +198,9 @@ def _prepare(root, exercise_id):
     for preset in ["debug", *spec["sanitizers"]]:
         report = run_variant(root, path, spec, contract, "reference", preset, teaching / "reference", True)
         children.append(report)
+        if report["outcome"] == "environment_error":
+            ready_path.unlink(missing_ok=True)
+            raise LabError(f"Preparation stopped at {preset}: {report['test_summary'].get('error', 'environment unavailable')}; evidence/{report['id']}/summary.json")
         if report["exit_status"]:
             failures.append(f"Reference failed under {preset}: {report['outcome']}")
     skeleton = run_variant(root, path, spec, contract, "skeleton", variant=teaching / "skeleton")

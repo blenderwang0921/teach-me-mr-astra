@@ -11,3 +11,10 @@ __pycache__/
 *.tmp
 .DS_Store
 
+
+# Local immutable run history: preserved on disk, excluded from normal changes.
+/evidence/run-*/
+/learner/artifacts/*-update.json
+/learner/artifacts/handoff-*.json
+/.instructor/*/ready.json
+/.vscode/c_cpp_properties.json

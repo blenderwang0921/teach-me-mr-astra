@@ -43,3 +43,10 @@ Linux CI targets Ubuntu 24.04 with Clang 18/GCC 14 and Python 3.11/3.14. The int
 - Changed contract: increment exercise revision, record the reason, and run `prepare`. Student edits alone do not require revision changes.
 - Failed source/test discovery or zero tests: fix the exercise/framework, not the learner's proficiency record.
 
+
+## Cached dependency behavior
+
+The Catch2 pin identifies an annotated tag object. Resolve it with `^{commit}` before
+comparing it with HEAD. Fetch only when the pinned object is missing; verify the
+working tree on every use. A valid cache must work without GitHub access. The lab
+automatically selects installed Homebrew LLVM on macOS unless CXX overrides it.

@@ -1,0 +1,19 @@
+{
+  "files.exclude": {
+    "**/evidence": true,
+    "**/build": true,
+    "**/reports": true,
+    "**/.cache": true,
+    "**/.instructor": true
+  },
+  "search.exclude": {
+    "**/evidence/**": true,
+    "**/build/**": true,
+    "**/reports/**": true,
+    "**/.cache/**": true,
+    "**/.instructor/**": true
+  },
+  "files.readonlyInclude": {
+    "**/evidence/**": true
+  }
+}

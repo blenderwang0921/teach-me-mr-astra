@@ -144,11 +144,18 @@ def ensure_catch(root, commands, log_dir, timeout):
 
     if not (checkout / ".git").exists():
         command(["git", "init"], "catch-init.log")
+    # The pinned object may be an annotated tag; compare peeled commits.
+    pinned = execute(["git", "rev-parse", "--verify", f"{CATCH_COMMIT}^{{commit}}"],
+                     log_dir / "catch-pin.log", timeout, cwd=checkout)
+    commands.append(pinned)
+    if pinned["exit_status"]:
+        command(["git", "fetch", "--depth", "1", "https://github.com/catchorg/Catch2.git", CATCH_COMMIT], "catch-fetch.log")
+        command(["git", "rev-parse", "--verify", f"{CATCH_COMMIT}^{{commit}}"], "catch-pin.log")
+    expected = (log_dir / "catch-pin.log").read_text().strip()
     current = execute(["git", "rev-parse", "HEAD"], log_dir / "catch-head.log", timeout, cwd=checkout)
     commands.append(current)
-    if current["exit_status"] or (log_dir / "catch-head.log").read_text().strip() != CATCH_COMMIT:
-        command(["git", "fetch", "--depth", "1", "https://github.com/catchorg/Catch2.git", CATCH_COMMIT], "catch-fetch.log")
-        command(["git", "checkout", "--detach", CATCH_COMMIT], "catch-checkout.log")
+    if current["exit_status"] or (log_dir / "catch-head.log").read_text().strip() != expected:
+        command(["git", "checkout", "--detach", expected], "catch-checkout.log")
     command(["git", "diff", "--exit-code", "HEAD", "--"], "catch-integrity.log")
     return checkout
 

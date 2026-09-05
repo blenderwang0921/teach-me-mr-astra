@@ -27,3 +27,10 @@ Do not relax acceptance because the learner failed. When the exercise is wrong, 
 
 Implementation changes only affect a run's source hash. Provided files, tests, reference/skeleton/mutants, schemas, and execution-tool changes invalidate the contract. A previously published contract cannot be republished under the same revision after such a change.
 
+
+## Avoid avoidable preparation work
+
+Verify the learner command against CLI help before publishing. Use the active
+exercise `check` default and link the actual editable file. Inspect cached dependency
+failures once before retrying; do not treat them as multiple mutant failures.
+Routine teaching updates should use compact status and avoid full report dumps.

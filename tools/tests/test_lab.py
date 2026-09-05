@@ -61,6 +61,64 @@ class WorkspaceTest(unittest.TestCase):
         return result
 
 
+class WorkflowTests(WorkspaceTest):
+    def test_check_defaults_to_active_exercise_and_accepts_explicit_id(self):
+        self.planning()
+        with patch("lab.cli.exercise.check", return_value={"exit_status": 0}) as check:
+            cli.dispatch(cli.parser().parse_args(["--root", str(self.root), "check"]))
+            check.assert_called_once_with(self.root.resolve(), EXERCISE, None)
+            check.reset_mock()
+            cli.dispatch(cli.parser().parse_args(["--root", str(self.root), "check", "another", "--preset", "debug"]))
+            check.assert_called_once_with(self.root.resolve(), "another", "debug")
+
+    def test_check_without_active_exercise_has_actionable_error(self):
+        with self.assertRaisesRegex(LabError, "No active exercise"):
+            cli.dispatch(cli.parser().parse_args(["--root", str(self.root), "check"]))
+
+    def test_compact_status_omits_nested_logs(self):
+        report = dict(id="run-example", outcome="passed", exit_status=0,
+                      exercise_revision=1, source_snapshot="evidence/run-example/source", commands=["verbose"])
+        with patch("lab.cli.state.status", return_value={"session": state.load_session(self.root), "last_report": report, "integrity_issues": []}):
+            data, code = cli.dispatch(cli.parser().parse_args(["--root", str(self.root), "status", "--compact", "--json"]))
+        self.assertEqual(code, 0)
+        self.assertEqual(data["last_report"]["outcome"], "passed")
+        self.assertNotIn("commands", data["last_report"])
+
+    def test_preparation_stops_after_first_environment_failure(self):
+        self.planning()
+        result = dict(commands=[], test_summary={"error": "offline"}, toolchain={}, outcome="environment_error", exit_status=2)
+        with patch("lab.exercise.run_cpp", return_value=result) as run:
+            with self.assertRaisesRegex(LabError, "Preparation stopped.*offline"):
+                exercise.prepare(self.root, EXERCISE)
+        self.assertEqual(run.call_count, 1)
+        self.assertEqual(state.load_session(self.root)["phase"], "blocked")
+        self.assertFalse((self.teaching / "ready.json").exists())
+
+    def test_cached_annotated_tag_works_offline_and_rejects_dirty_tree(self):
+        checkout = self.root / ".cache/dependencies/Catch2"
+        checkout.mkdir(parents=True)
+        def git(*args):
+            return subprocess.check_output(["git", "-C", str(checkout), *args], text=True).strip()
+        git("init", "-q")
+        (checkout / "asset.txt").write_text("original")
+        git("add", "asset.txt")
+        identity = ("-c", "user.name=Lab Test", "-c", "user.email=lab@example.invalid")
+        git(*identity, "commit", "-qm", "fixture")
+        git(*identity, "tag", "-a", "pinned", "-m", "annotated pin")
+        tag = git("rev-parse", "pinned")
+        self.assertNotEqual(tag, git("rev-parse", "HEAD"))
+        original_execute = runner.execute
+        def offline(argv, *args, **kwargs):
+            self.assertNotIn("fetch", argv, "Valid annotated-tag cache must not use network")
+            return original_execute(argv, *args, **kwargs)
+        logs = self.root / "reports/cache-test"
+        with patch("lab.runner.CATCH_COMMIT", tag), patch("lab.runner.execute", side_effect=offline):
+            self.assertEqual(runner.ensure_catch(self.root, [], logs, 10), checkout.resolve())
+            (checkout / "asset.txt").write_text("modified")
+            with self.assertRaisesRegex(LabError, "Catch2 preparation failed"):
+                runner.ensure_catch(self.root, [], logs, 10)
+
+
 class StateTests(WorkspaceTest):
     def test_corrupt_journal_is_not_partially_replayed(self):
         before = (self.root / "learner/session.json").read_bytes()

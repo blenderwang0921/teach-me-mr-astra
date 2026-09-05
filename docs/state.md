@@ -44,4 +44,4 @@ Evidence entries include id, timestamp, exercise id/revision, skill, observation
 
 Save raw explanations before submitting their referencing transaction. A run's `source_hash` covers its actual executed source snapshot, including additional tests. `student_source_hash` covers the student's original exercise tree so added acceptance tests do not distort source freshness checks. Reports are never evidence of understanding by themselves.
 
-`status` checks reference existence and publication integrity. It reports missing support rather than silently treating an orphaned observation as supported. Keep durable evidence under version control and preserve referenced files during cleanup.
+`status` checks reference existence and publication integrity. It reports missing support rather than silently treating an orphaned observation as supported. Preserve all referenced evidence on disk. Run snapshots are ignored by default to keep learner changes clear; a Git-only backup requires explicitly archiving referenced reports and their child snapshots with `git add -f`. Never delete evidence as routine cleanup.

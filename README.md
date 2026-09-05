@@ -63,9 +63,9 @@ Exit codes: **0** success; **1** student compilation/test failure or test timeou
 
 ## State, evidence, and recovery
 
-This is a **private learning repository**. Track `learner/`, `exercises/`, `.instructor/`, and `evidence/` in your private Git history. `.instructor/` reduces accidental answer exposure; it is not a security boundary. Export a clean framework copy before publishing publicly. The tools never commit, push, create an external repository, or send messages.
+This is a **private learning repository**. Track learner answers, exercises, and instructor assets in private Git history. Generated `evidence/run-*/` snapshots remain on disk but are ignored by default to keep Changes focused. `.instructor/` reduces accidental answer exposure; it is not a security boundary. Export a clean framework copy before publishing publicly. The tools never commit, push, create an external repository, or send messages.
 
-Full logs live in ignored `reports/`; immutable run snapshots and compact summaries live in tracked `evidence/<report-id>/`. Raw learner explanations belong in `learner/artifacts/`. Evidence references must point to durable files, not mutable exercise files or disposable logs. Do not delete referenced evidence. The append-only observation log can be corrected by adding a new entry with `supersedes`.
+Full logs live in ignored `reports/`; immutable run snapshots and compact summaries live in locally retained, ignored `evidence/<report-id>/`. Raw learner explanations belong in `learner/artifacts/`. Evidence references must point to durable files, not mutable exercise files or disposable logs. Do not delete referenced evidence. The append-only observation log can be corrected by adding a new entry with `supersedes`.
 
 Run `status` after restarting. Lab commands recover any interrupted state transaction while holding an OS file lock. A stale lock file is harmless; a live writer causes a conflict error. Do not remove locks to bypass another running process. If a journal is corrupt, preserve it and restore the affected learner files from your private backup rather than inventing progress.
 
@@ -90,3 +90,13 @@ See [local verification results](docs/verification.md) for the tested environmen
 [English design](docs/design.md) describes the implemented first version; [original design](design.md) preserves the Traditional Chinese handoff. Upstream material contracts exist, but adapters, a material library, Windows support, API workers, scheduling, and automatic mastery scoring are deferred.
 
 Keep teaching rules concise and deterministic checks in Python. Add behavioral tests for state, publication, and evidence changes. Do not convert fixtures into assigned lessons or add a prefilled curriculum. Preserve upstream license notices when introducing material; no public distribution license is implied for learner work or external assets.
+
+## Focused workspace
+
+Edit only the active `exercises/<id>/` workspace. VS Code hides generated run copies
+and instructor assets from Explorer and search, and marks evidence read-only.
+`check` defaults to the active exercise; `status --compact --json` omits report logs.
+On this Apple Silicon host the lab selects installed Homebrew LLVM unless `CXX`
+is explicitly set. A cached pinned Catch2 object works without network access.
+Run history is not included in a normal Git commit: back up the entire local folder,
+or explicitly force-add referenced reports and all their child snapshots for archival.

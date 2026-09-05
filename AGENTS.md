@@ -4,7 +4,7 @@ This repository is a local C++ learning environment. Treat `start`, `continue`, 
 
 ## Start or resume
 
-1. Use `.venv/bin/python tools/lab.py status`; if state is absent, run `init`. Run `doctor` on first use or an environment failure. See `docs/environment.md` for this host's compiler selection.
+1. Use `.venv/bin/python tools/lab.py status --compact --json`; if state is absent, run `init`. Run `doctor` on first use or an environment failure. See `docs/environment.md` for this host's compiler selection.
 2. Read `learner/profile.json` and `learner/session.json`. Follow `next_action`; load only relevant evidence and the active spec. Do not restart an interview when resumable progress exists.
 3. Route by phase: onboarding → `teaching/interview.md`; planning/preparing → `teaching/generate.md`; practicing → `teaching/coach.md`; reviewing → `teaching/review.md`. Paused/blocked sessions require their recorded reason and resume position.
 
@@ -24,3 +24,13 @@ This repository is a local C++ learning environment. Treat `start`, `continue`, 
 - New exercises require successful `prepare` and semantic review before practicing. If generation fails, allow at most two automatic repair attempts before recording blocked and discussing a smaller valid task.
 - No preset curriculum, external messages, API billing, model switching, or autonomous upstream imports. This is a private repository; preserve learner records and answers.
 
+
+## Efficient sessions
+
+- Prefer compact status and targeted report fields. Never dump full aggregate JSON or repetitive build logs into context; inspect a failing child log only when needed.
+- Give the exact editable workspace link first. Evidence snapshots are generated history, never a learner workspace. If reported work differs from disk, check save/path before reasoning about concurrency.
+- Use `.venv/bin/python tools/lab.py check` for the active exercise; confirm command syntax using `--help` before publishing instructions.
+- Preserve known host setup. A dependency/network error calls for inspecting the dependency cache, not repeatedly running compiler probes or the whole validation matrix. Retry network access once only if the pinned object is absent.
+- Wait 20–30 seconds between build output checks; report only meaningful progress. Do not spawn agents for routine teaching.
+- If the learner stops for time/token limits, save a paused resume position and defer questions. Preserve successful test evidence without declaring understanding or completion.
+- Run snapshots stay local and ignored by default, per learner preference. Never delete records to reduce Git noise. Explicit archival can force-add the referenced report closure when requested.
