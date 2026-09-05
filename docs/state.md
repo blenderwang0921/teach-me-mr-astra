@@ -48,14 +48,20 @@ Save raw explanations before submitting their referencing transaction. A run's `
 
 ## Short commands (preferred)
 
-Use `./lab context --json` once at entry. It combines profile/session, active spec
-and bounded editable source, two recent observations, compact report profiles and
-source/contract freshness. `check_reusable` means a successful required-profile
-student check matches the active source and contract with no integrity errors.
-It does not assert understanding. No compiler is run by context.
+Use `./lab context --json` once at each routed teaching step. In particular, a
+completion or review request after learner work starts a new step and needs fresh
+context even when context was already read before assignment. This discovers a
+`./lab check` the learner ran outside the chat before deciding whether another
+check is needed. Context combines profile/session, active spec and bounded editable
+source, two recent observations, compact report profiles and source/contract
+freshness. `check_reusable` means a successful required-profile student check
+matches the active source and contract with no integrity errors. It does not assert
+understanding. No compiler is run by context.
 
-Use the returned version; successful mutations return the new version. Read again
-only after an intervening command, conflict, or a meaningful need for fresh context.
+Use the returned version; successful mutations return the new version. "Once"
+means once for that routed step, not once for the whole conversation. Read again
+only after an intervening learner command, conflict, a later completion/review
+step, or another meaningful need for fresh context.
 
 ```sh
 ./lab prepare ID --assign --expected-version N

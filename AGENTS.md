@@ -7,11 +7,16 @@ upstream imports, or routine teaching agents. Preserve private learner records.
 
 ## Entry and routing
 
-For `start`, `continue`, `開始`, `繼續`, or the next teaching step, run
-`./lab context --json` once. It includes profile, session/version, active spec,
-editable source, recent evidence, report location, integrity and check freshness.
-Do not separately reread these files or dump aggregate reports. Read only the
-returned workflow file; do not reread it within the same conversation.
+For `start`, `continue`, `開始`, `繼續`, or each new teaching step, run
+`./lab context --json` once before acting. A completion or review request after
+learner work is a new step: refresh even if context was read when assigning or
+coaching, because the learner may have run `./lab check` outside the chat. Here
+"once" means once per routed step, not once per conversation; do not repeat it
+without an intervening learner command, conflict, or other freshness need. Context
+includes profile, session/version, active spec, editable source, recent evidence,
+report location, integrity and check freshness. Do not separately reread these
+files or dump aggregate reports. Read only the returned workflow file; do not
+reread an unchanged workflow within the same conversation.
 
 Missing state: `./lab init`. Run `doctor` only on initial environment setup or an
 environment failure, not at every new chat. Preserve the known LLVM/cache setup
@@ -28,10 +33,12 @@ Use `./lab session resume --expected-version N --next-action '...'` to resume.
   Repair provided-file/environment defects transparently; changed contracts need
   a recorded defect, a new revision, and validation.
 - If work differs from disk, check save/path first. No polling, editing or tests
-  while waiting for learner work. A completion request authorizes review checks.
-- If `check_reusable` is true, reuse the pass. Otherwise run `./lab check` when
-  review is requested. Tests do not establish understanding. Accept an explanation
-  already supplied; do not ask another question solely to satisfy a phase label.
+  while waiting for learner work. A completion request authorizes review checks,
+  but first refresh context so externally run checks can be discovered.
+- Decide from that refreshed context: if `check_reusable` is true, reuse the pass
+  and do not run `./lab check`; otherwise run it when review is requested. Tests do
+  not establish understanding. Accept an explanation already supplied; do not ask
+  another question solely to satisfy a phase label.
 
 ## Records and efficiency
 

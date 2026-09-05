@@ -11,9 +11,13 @@ Give the least useful assistance: 0 independent; 1 prediction/explanation questi
 5 full solution only on explicit request. This is not a mandatory interrogation.
 Record actual help and uncertainty; preserve raw answers first.
 
-When review is requested, reuse `check_reusable`; otherwise `./lab check` runs all
-required profiles on snapshots. A failing check stays practicing. Read only named
-failures and a relevant child log when needed. Do not poll while awaiting edits.
+When the learner reports completion, ensure the current `context` was obtained
+after that report and after their editing interval. A context captured before the
+learner worked cannot decide check reuse because they may have run `./lab check`
+outside the chat. From the refreshed result, reuse a true `check_reusable` and do
+not run another check; otherwise `./lab check` runs all required profiles on
+snapshots. A failing check stays practicing. Read only named failures and a
+relevant child log when needed. Do not poll while awaiting edits.
 
 A fresh pass plus an already supplied explanation can go directly to `finish`;
 read `review.md` once. If the explanation is missing, ask one focused question and
