@@ -1,5 +1,7 @@
 # Environment and reproducibility
 
+English | [繁體中文](zh-TW/environment.md)
+
 ## Baseline
 
 - Python 3.11+; dependencies and transitive dependencies are pinned in `uv.lock`. `uv sync --frozen` installs Ninja 1.13.0 and jsonschema 4.25.1 into `.venv`.

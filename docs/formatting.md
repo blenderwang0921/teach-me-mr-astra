@@ -1,5 +1,7 @@
 # Local formatting
 
+English | [繁體中文](zh-TW/formatting.md)
+
 `uv sync --frozen` installs the locked Ruff development dependency. `./lab format`
 formats framework Python; `./lab format --check` checks it without edits. Explicit
 files can be supplied, including C++: `./lab format exercises/ID/src/exercise.cpp`.

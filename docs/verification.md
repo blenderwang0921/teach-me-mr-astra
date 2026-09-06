@@ -1,5 +1,7 @@
 # Local verification — 2026-09-05
 
+English | [繁體中文](zh-TW/verification.md)
+
 Verified on macOS 14.5 / arm64 with Python 3.14.3, CMake 4.3.1, Ninja 1.13.0, and Homebrew Clang 22.1.2 / libc++ 220102. Commands explicitly selected `CXX=/opt/homebrew/opt/llvm/bin/clang++`.
 
 ## Results
@@ -27,4 +29,3 @@ python tools/lab.py status
 ```
 
 Use a compiler path appropriate for another machine. Real integration tests need initial access to the pinned Catch2 source. Tool tests do not need a model API or network.
-

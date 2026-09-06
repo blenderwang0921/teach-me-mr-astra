@@ -53,7 +53,7 @@ python tools/lab.py status
 
 Ask for a hint when needed. After implementation, explain a key decision or predict a changed requirement. The teacher records assistance and evidence before choosing the next step. You can explicitly request a full solution, but that completion will be recorded as assisted.
 
-Formal documents, generated exercises, source comments, and reports use English. Conversation defaults to Traditional Chinese through `learner/profile.json`; your own answers can remain in your preferred language.
+Formal documents, generated exercises, source comments, and reports use English, except documentation translations. Conversation defaults to Traditional Chinese through `learner/profile.json`; your own answers can remain in your preferred language.
 
 ## Commands
 
@@ -99,6 +99,14 @@ Linux CI uses Clang 18 and GCC 14. Current unfinished exercises are not required
 See [local verification results](docs/verification.md) for the tested environment, checks, and remaining platform limits.
 
 ## Design and contribution
+
+Documentation is available in English under `docs/` and in [繁體中文](docs/zh-TW/design.md):
+[設計](docs/zh-TW/design.md), [環境](docs/zh-TW/environment.md),
+[格式化](docs/zh-TW/formatting.md), [狀態交易](docs/zh-TW/state.md), and
+[驗證紀錄](docs/zh-TW/verification.md).
+English is the primary maintenance version. Additions, edits, renames, and deletions
+must update all supported languages and affected links in the same change, as
+required by [AGENTS.md](AGENTS.md#documentation-languages).
 
 [English design](docs/design.md) describes the implemented first version; [original design](design.md) preserves the Traditional Chinese handoff. Upstream material contracts exist, but adapters, a material library, Windows support, API workers, scheduling, and automatic mastery scoring are deferred.
 

@@ -1,5 +1,7 @@
 # Local C++ teaching lab — implemented v1 design
 
+English | [繁體中文](zh-TW/design.md)
+
 The original Traditional Chinese handoff is [design.md](../design.md). This English document is the primary implementation design for the first three delivery stages. Design intentions and verified behavior are distinguished from future learning outcomes.
 
 ## Purpose and boundaries
@@ -22,7 +24,7 @@ The repository is private by default and tracks learner history, generated tasks
 
 Teacher decisions are not replaced with heuristics in the CLI. Scripts never generate missing exercises through a model. A correct reference is necessary but insufficient: the teacher reviews semantics and the tool verifies objective-specific faults and learner skeleton behavior.
 
-All formal documents, generated artifacts, code comments, and reusable summaries are English. Interaction language is independent and initially `zh-TW`. Original learner answers and upstream notices retain their language.
+All formal documents, generated artifacts, code comments, and reusable summaries are English, except documentation translations. English documents in `docs/` are the primary maintenance version; translations use matching filenames under `docs/<language>/` (currently `zh-TW`). Additions, edits, renames, and deletions must update all supported languages and affected links in the same change, including future languages. Interaction language is independent and initially `zh-TW`. Original learner answers and upstream notices retain their language.
 
 ## Build and execution
 
@@ -71,4 +73,3 @@ GitHub Actions configures Linux Clang/GCC validation and checks declared-complet
 Material manifests/catalogs support later candidate curation, but upstream execution and reset adapters are deferred. A future material must pin its source/commit, preserve licensing, record an exact environment, and demonstrate baseline reproducibility before becoming ready. The first version does not claim any validated upstream project.
 
 Token accounting, a ten-session cost review, optional workers, a large material library, scheduling, and Windows support remain later work. No subscription quota or model name is embedded in the teaching rules. Learning success still requires actual independent implementation and explanation across new scenarios.
-

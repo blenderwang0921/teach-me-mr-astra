@@ -1,5 +1,7 @@
 # State transactions
 
+English | [繁體中文](zh-TW/state.md)
+
 All structured records have `schema_version: 1`. Schemas live in `schemas/`; fields outside the declared interface are rejected. `session.version` is the optimistic concurrency counter, independent of exercise revision.
 
 `state apply <file>` accepts `schema_version`, `expected_version`, and optional `profile`, `session`, `evidence`, and `reviews`. Profile/session are complete replacement objects; evidence/reviews are new records. When supplying a session, set its version to `expected_version + 1`. An evidence-only/profile-only transaction also increments the stored session version. Read `status --json` immediately before constructing the update.

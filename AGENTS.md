@@ -1,9 +1,20 @@
 # Local C++ learning lab
 
 Conversation follows `preferred_interaction_language` (initially zh-TW). Formal
-files and reusable summaries are English; preserve raw learner answers verbatim.
+files and reusable summaries are English, except documentation translations;
+preserve raw learner answers verbatim.
 No preset curriculum, external messages, API billing, model switching, autonomous
 upstream imports, or routine teaching agents. Preserve private learner records.
+
+## Documentation languages
+
+English documents in `docs/` are the primary maintenance version; translations
+use matching filenames under `docs/<language>/` (currently `docs/zh-TW/`). When
+adding, modifying, renaming, or deleting a document, update every supported
+language and affected links in the same change. Keep sections, technical meaning,
+commands, examples, and historical verification facts aligned. Each document
+links to its other language versions; translated links prefer the same language
+when available. This rule also applies to any languages added later.
 
 ## Entry and routing
 
