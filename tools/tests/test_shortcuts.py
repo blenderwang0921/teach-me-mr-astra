@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 from test_lab import EXERCISE, WorkspaceTest
 from lab import exercise, state, workflow
-from lab.core import FRAMEWORK, LabError, tree_hash
+from lab.core import FRAMEWORK, LabError, read_json, tree_hash
 import format_code
 
 
@@ -126,13 +126,63 @@ class ShortcutTests(WorkspaceTest):
     def test_prepare_assign_checks_version_then_assigns_only_on_success(self):
         self.transition("planning")
         version = state.load_session(self.root)["version"]
-        with patch("lab.exercise.run_cpp", self.fake_run):
+        ide = {
+            "compile_commands": "build/intellisense/compile_commands.json",
+            "compiler": "fixture-compiler",
+            "commands": [],
+            "outcome": "ready",
+            "exit_status": 0,
+        }
+        with (
+            patch("lab.exercise.run_cpp", self.fake_run),
+            patch("lab.workflow.runner.configure_ide", return_value=ide) as configure_ide,
+        ):
             with self.assertRaisesRegex(LabError, "conflict"):
                 workflow.prepare_and_assign(self.root, EXERCISE, version - 1)
             self.assertEqual(state.load_session(self.root)["phase"], "planning")
             report = workflow.prepare_and_assign(self.root, EXERCISE, version)
         self.assertEqual(report["outcome"], "ready")
+        self.assertEqual(report["ide_setup"]["outcome"], "ready")
         self.assertEqual(report["session"]["phase"], "practicing")
+        configure_ide.assert_called_once_with(
+            self.root, self.path.resolve(), read_json(self.path / "spec.json")
+        )
+
+    def test_prepare_assign_continues_when_ide_setup_fails(self):
+        self.transition("planning")
+        failure = {
+            "compile_commands": "build/intellisense/compile_commands.json",
+            "compiler": "fixture-compiler",
+            "commands": [],
+            "outcome": "configuration_error",
+            "exit_status": 2,
+        }
+        with (
+            patch("lab.exercise.run_cpp", self.fake_run),
+            patch("lab.workflow.runner.configure_ide", return_value=failure),
+        ):
+            report = workflow.prepare_and_assign(self.root, EXERCISE, 1)
+        self.assertEqual(report["exit_status"], 0)
+        self.assertEqual(report["ide_setup"]["exit_status"], 2)
+        self.assertEqual(state.load_session(self.root)["phase"], "practicing")
+
+    def test_ide_requires_an_active_exercise(self):
+        with self.assertRaisesRegex(LabError, "No active exercise"):
+            workflow.configure_ide(self.root)
+
+    def test_ide_can_repair_configuration_when_ready_is_stale(self):
+        self.planning()
+        ide = {
+            "compile_commands": "build/intellisense/compile_commands.json",
+            "compiler": "fixture-compiler",
+            "commands": [],
+            "outcome": "ready",
+            "exit_status": 0,
+        }
+        with patch("lab.workflow.runner.configure_ide", return_value=ide):
+            result = workflow.configure_ide(self.root)
+        self.assertEqual(result["exercise_id"], EXERCISE)
+        self.assertEqual(result["outcome"], "ready")
 
     def test_prepare_assign_failure_is_blocked_not_practicing(self):
         self.transition("planning")

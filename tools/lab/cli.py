@@ -69,6 +69,10 @@ def parser():
         help="One compact teaching read: state, profile, source, evidence, and check freshness",
     )
     context_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
+    ide_parser = commands.add_parser(
+        "ide", help="Generate IntelliSense configuration for the active exercise"
+    )
+    ide_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
     session_parser = commands.add_parser(
         "session", help="Transition without rewriting the entire session JSON"
     )
@@ -151,6 +155,9 @@ def dispatch(args):
         elif args.command == "context":
             data = workflow.context(root)
             code = 2 if data["integrity_issues"] else 0
+        elif args.command == "ide":
+            data = workflow.configure_ide(root)
+            code = data["exit_status"]
         elif args.command == "session":
             data = workflow.transition(
                 root,
@@ -203,7 +210,14 @@ def summarize(command, data, code):
         lines += [f"Pending: {q}" for q in session["pending_questions"]]
         if session["reason"]:
             lines.append(f"Reason: {session['reason']}")
-    if "outcome" in data:
+    if command == "ide":
+        lines += [
+            f"Exercise: {data['exercise_id']}",
+            f"Compile database: {data['compile_commands']}",
+        ]
+        if "error" in data:
+            lines.append(data["error"])
+    elif "outcome" in data:
         lines += [f"Outcome: {data['outcome']}", f"Evidence: evidence/{data['id']}/summary.json"]
         if data["commands"]:
             lines.append(f"Logs: {Path(data['commands'][0]['log']).parent}")
@@ -214,6 +228,16 @@ def summarize(command, data, code):
             )
             if "error" in run["summary"]:
                 lines.append(run["summary"]["error"])
+    if "ide_setup" in data:
+        ide = data["ide_setup"]
+        if ide["exit_status"]:
+            lines.append(
+                f"Warning: IntelliSense setup failed ({ide['outcome']}); run ./lab ide to retry."
+            )
+            if "error" in ide:
+                lines.append(ide["error"])
+        else:
+            lines.append(f"IntelliSense: {ide['compile_commands']}")
     if "check_reusable" in data:
         lines.append(f"Workflow: {data['workflow']}")
         lines.append(data["check_reason"])

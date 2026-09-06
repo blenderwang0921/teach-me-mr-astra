@@ -29,11 +29,17 @@ export CXX=/opt/homebrew/opt/llvm/bin/clang++
 
 不要為了修復此專案而全域替換系統編譯器。手動使用 CMake 時，將主機專屬預設組態放在已忽略的 `CMakeUserPresets.json`。執行實驗室 CLI 時，透過 `CXX` 選擇編譯器；其內建組態名稱固定不變。
 
+## VS Code IntelliSense
+
+工作區會設定 Microsoft C/C++ 擴充套件讀取 `build/intellisense/compile_commands.json`。成功執行 `prepare --assign` 後，系統會使用目前題目的實際 `exercises/<id>/` 路徑更新這份資料庫；IntelliSense 不會指向不可變的 evidence 或 instructor 原始碼。這個設定步驟不會編譯或執行題目。
+
+若既有 active exercise 需要重新產生資料庫，請執行 `./lab ide`；即使框架變更已使先前的驗證證據過期，仍可使用此指令。這項僅供編輯器使用的操作不會放寬 `check` 或完成流程的 ready 檢查。如果 VS Code 之後仍保留過期結果，請從命令選擇區執行 **C/C++: Reset IntelliSense Database**。題目仍位於原本的實體目錄；系統刻意不建立 `current` symlink 或第二個可編輯路徑。
+
 ## 組態與限制
 
 `debug` 與 `release` 的建置類型不同。`asan` 啟用位址與未定義行為檢查；`tsan` 另外啟用執行緒檢查。Sanitizer 會對練習原始碼與測試加入檢測。Catch2 本身使用正常建置設定。必要組態必須先編譯並執行能力探測，才能測試；無法使用的必要組態會明確失敗。
 
-規格限制建置平行度、每項測試與每個指令。指令在程序群組中執行，逾時會終止整個群組。這是執行管理措施，不是用於不可信 C++ 或上游儲存庫的沙箱。不要僅因為有逾時限制，就執行不可信的練習。目前資源限制不包含硬性記憶體配額。
+建置工作數取主機 CPU 數、四及規格所設建置工作上限三者的最小值。每項測試與每個指令也有規格指定的逾時限制。指令在程序群組中執行，逾時會終止整個群組。這是執行管理措施，不是用於不可信 C++ 或上游儲存庫的沙箱。不要僅因為有逾時限制，就執行不可信的練習。目前資源限制不包含硬性記憶體配額。
 
 Linux CI 以 Ubuntu 24.04、Clang 18/GCC 14 及 Python 3.11/3.14 為目標。整合測試夾具會執行 ASan+UBSan。雖然會探測 TSan 能力，但實際並行正確性需要專門的並行練習與測試；系統不會預先指派這類練習。
 
@@ -47,4 +53,4 @@ Linux CI 以 Ubuntu 24.04、Clang 18/GCC 14 及 Python 3.11/3.14 為目標。整
 
 ## 相依套件快取行為
 
-Catch2 固定版本指向的是附註標籤物件。與 HEAD 比較前，先用 `^{commit}` 解析。只有固定物件不存在時才擷取；每次使用都驗證工作目錄。有效快取必須能在無法連線 GitHub 時運作。在 macOS 上，實驗室會自動選擇已安裝的 Homebrew LLVM，除非 CXX 覆寫此選擇。
+Catch2 固定版本指向的是附註標籤物件。與 HEAD 比較前，先用 `^{commit}` 解析。只有固定物件不存在時才擷取；每次使用都驗證工作目錄。有效快取必須能在無法連線 GitHub 時運作。相同編譯器與組態會重用 CMake 建置目錄，因此後續檢查能重用未變更的 Catch2 物件，同時每次執行仍保有各自不可變的原始碼與證據快照。在 macOS 上，實驗室會自動選擇已安裝的 Homebrew LLVM，除非 CXX 覆寫此選擇。

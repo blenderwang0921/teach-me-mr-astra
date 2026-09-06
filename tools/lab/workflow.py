@@ -1,6 +1,6 @@
-"""Compact teaching context and guarded shortcuts; no model or compiler calls."""
+"""Compact teaching context and guarded workflow shortcuts."""
 
-from . import exercise, state
+from . import exercise, runner, state
 from .core import LabError, contained, read_json, tree_hash, validate
 
 ROUTES = {
@@ -104,6 +104,18 @@ def context(root):
     return result
 
 
+def configure_ide(root):
+    """Prepare IntelliSense for the active exercise without running tests."""
+    session = state.load_session(root)
+    exercise_id = session["current_exercise_id"]
+    if not exercise_id:
+        raise LabError("No active exercise; IntelliSense is prepared after assignment")
+    path, spec = exercise.load_exercise(root, exercise_id)
+    if session["exercise_revision"] != spec["revision"]:
+        raise LabError("Active exercise revision differs from its specification")
+    return {"exercise_id": exercise_id, **runner.configure_ide(root, path, spec)}
+
+
 def transition(root, phase, expected_version, next_action, exercise_id=None, reason=None):
     session = state.load_session(root)
     if phase == "resume":
@@ -192,6 +204,7 @@ def prepare_and_assign(root, exercise_id, expected_version):
         raise LabError("prepare --assign requires planning or the same active preparing exercise")
     report = exercise.prepare(root, exercise_id)
     if report["exit_status"] == 0:
+        ide_setup = configure_ide(root)
         session = state.load_session(root)
         updated = transition(
             root,
@@ -199,5 +212,5 @@ def prepare_and_assign(root, exercise_id, expected_version):
             session["version"],
             f"Learner should edit exercises/{exercise_id}/ using its README, then run ./lab check. Await learner work; do not poll or edit their implementation.",
         )
-        report = {**report, "session": updated["session"]}
+        report = {**report, "ide_setup": ide_setup, "session": updated["session"]}
     return report

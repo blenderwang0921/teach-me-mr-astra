@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import re
 from pathlib import Path
@@ -13,9 +14,11 @@ import tempfile
 import time
 import xml.etree.ElementTree as ET
 
-from .core import FRAMEWORK, LabError, atomic_text, contained
+from .core import FRAMEWORK, LabError, atomic_text, contained, digest, json_text
 
 CATCH_COMMIT = "56809e5282f104c5c8b570e7c2996cdc352d94f1"
+BUILD_JOB_LIMIT = 4
+BUILD_CACHE_ENVIRONMENT = ("CPPFLAGS", "CXXFLAGS", "LDFLAGS", "MACOSX_DEPLOYMENT_TARGET")
 
 
 def environment():
@@ -72,6 +75,23 @@ def compiler():
             f"Missing compiler {selected}; install Clang or set CXX to a compiler executable"
         )
     return resolved
+
+
+def build_jobs(spec):
+    """Respect the exercise limit without oversubscribing the host."""
+    return min(os.cpu_count() or 1, BUILD_JOB_LIMIT, spec["resource_limits"]["build_jobs"])
+
+
+def build_directory(root, preset, compiler_path, compiler_version):
+    """Reuse dependency objects for equivalent builds while keeping evidence immutable."""
+    identity = [
+        ("compiler", str(compiler_path).encode()),
+        ("compiler_version", compiler_version.encode()),
+        ("preset", preset.encode()),
+    ]
+    identity.extend((name, os.environ.get(name, "").encode()) for name in BUILD_CACHE_ENVIRONMENT)
+    fingerprint = digest(identity)[:16]
+    return contained(root, f"build/cache/{preset}-{fingerprint}")
 
 
 def probe(root, standard=20, sanitizer="none"):
@@ -218,6 +238,67 @@ def ensure_catch(root, commands, log_dir, timeout):
     return checkout
 
 
+def configure_ide(root, source, spec):
+    """Generate a stable compile database for the live active exercise."""
+    root = Path(root).resolve()
+    commands = []
+    output = contained(root, "build/intellisense/compile_commands.json")
+    build = contained(root, "build/intellisense/cmake")
+    log_dir = contained(root, "build/intellisense/logs")
+    timeout = spec["resource_limits"]["command_timeout_seconds"]
+    result = {
+        "compile_commands": output.relative_to(root).as_posix(),
+        "compiler": None,
+        "commands": commands,
+        "outcome": "incomplete",
+        "exit_status": 2,
+    }
+    try:
+        selected_compiler = compiler()
+        result["compiler"] = selected_compiler
+        checkout = ensure_catch(root, commands, log_dir, timeout)
+    except (LabError, OSError) as exc:
+        result.update(outcome="environment_error", error=str(exc))
+        return result
+    configure = [
+        "cmake",
+        "--preset",
+        "debug",
+        "-S",
+        FRAMEWORK,
+        "-B",
+        build,
+        f"-DLAB_SOURCE_DIR={source}",
+        f"-DCMAKE_CXX_COMPILER={selected_compiler}",
+        f"-DFETCHCONTENT_SOURCE_DIR_CATCH2={checkout}",
+    ]
+    command = execute(configure, log_dir / "configure.log", timeout, cwd=FRAMEWORK)
+    commands.append(command)
+    if command["exit_status"]:
+        result.update(outcome="configuration_error")
+        return result
+    generated = build / "compile_commands.json"
+    try:
+        database = json.loads(generated.read_text())
+        source_root = Path(source).resolve()
+
+        def belongs_to_exercise(entry):
+            path = Path(entry["file"])
+            if not path.is_absolute():
+                path = Path(entry["directory"]) / path
+            return path.resolve().is_relative_to(source_root)
+
+        filtered = [entry for entry in database if belongs_to_exercise(entry)]
+        if not filtered:
+            raise LabError("CMake produced no compile commands for the active exercise")
+        atomic_text(output, json_text(filtered))
+    except (KeyError, OSError, ValueError, TypeError, LabError) as exc:
+        result.update(outcome="compile_database_error", error=str(exc))
+        return result
+    result.update(outcome="ready", exit_status=0)
+    return result
+
+
 def run_cpp(root, source, spec, report_id, preset):
     log_dir = contained(root, f"reports/{report_id}")
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -238,12 +319,13 @@ def run_cpp(root, source, spec, report_id, preset):
     try:
         if sys.platform not in spec["platform"]:
             raise LabError(f"Exercise requires platform {spec['platform']}; host is {sys.platform}")
+        selected_compiler = compiler()
         capability = probe(root, spec["cpp_standard"], preset)
         toolchain["standard_library"] = capability["detail"]
-        toolchain["compiler"] = compiler()
+        toolchain["compiler"] = selected_compiler
         toolchain["architecture"] = os.uname().machine
         toolchain["kernel"] = os.uname().release
-        version = execute([compiler(), "--version"], log_dir / "compiler.log", timeout)
+        version = execute([selected_compiler, "--version"], log_dir / "compiler.log", timeout)
         commands.append(version)
         toolchain["compiler_version"] = (
             (log_dir / "compiler.log").read_text(errors="replace").strip()
@@ -256,7 +338,10 @@ def run_cpp(root, source, spec, report_id, preset):
     except LabError as exc:
         summary["error"] = str(exc)
         return result("environment_error", 2)
-    build = contained(root, f"build/{report_id}")
+    jobs = build_jobs(spec)
+    build = build_directory(root, preset, selected_compiler, toolchain["compiler_version"])
+    toolchain["build_jobs"] = jobs
+    toolchain["build_cache"] = str(build)
     configure = [
         "cmake",
         "--preset",
@@ -266,7 +351,7 @@ def run_cpp(root, source, spec, report_id, preset):
         "-B",
         build,
         f"-DLAB_SOURCE_DIR={source}",
-        f"-DCMAKE_CXX_COMPILER={compiler()}",
+        f"-DCMAKE_CXX_COMPILER={selected_compiler}",
         f"-DFETCHCONTENT_SOURCE_DIR_CATCH2={checkout}",
     ]
     summary["stage"] = "configure"
@@ -283,7 +368,7 @@ def run_cpp(root, source, spec, report_id, preset):
                 "--target",
                 "lab_tests",
                 "--parallel",
-                str(spec["resource_limits"]["build_jobs"]),
+                str(jobs),
             ],
             log_dir / "build.log",
             timeout,
@@ -301,8 +386,6 @@ def run_cpp(root, source, spec, report_id, preset):
     )
     commands.append(discovery)
     try:
-        import json
-
         discovered = json.loads((log_dir / "discovery.json").read_text())["tests"]
         names = {test["name"] for test in discovered}
     except (ValueError, KeyError):

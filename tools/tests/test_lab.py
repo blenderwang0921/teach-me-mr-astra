@@ -424,6 +424,131 @@ class PublicationTests(WorkspaceTest):
 
 
 class ProcessTests(unittest.TestCase):
+    def test_ide_database_tracks_only_the_live_exercise(self):
+        spec = read_json(FIXTURE / "exercises/counter-fixture/spec.json")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            first = root / "exercises/first"
+            second = root / "exercises/second"
+            for source in [first, second]:
+                (source / "src").mkdir(parents=True)
+                atomic_text(source / "src/exercise.cpp", "int exercise() { return 0; }\n")
+
+            def configure(argv, log, timeout=120, cwd=None):
+                build = Path(argv[argv.index("-B") + 1])
+                source = Path(
+                    next(
+                        value.split("=", 1)[1]
+                        for value in argv
+                        if str(value).startswith("-DLAB_SOURCE_DIR=")
+                    )
+                )
+                database = [
+                    {
+                        "directory": str(build),
+                        "command": f"fixture-compiler -std=c++20 -I{source / 'include'} -c {source / 'src/exercise.cpp'}",
+                        "file": str(source / "src/exercise.cpp"),
+                    },
+                    {
+                        "directory": str(build),
+                        "command": "fixture-compiler -c dependency.cpp",
+                        "file": str(root / ".cache/dependency.cpp"),
+                    },
+                ]
+                atomic_text(build / "compile_commands.json", json.dumps(database))
+                atomic_text(log, "configured\n")
+                return {
+                    "argv": list(map(str, argv)),
+                    "exit_status": 0,
+                    "duration": 0.0,
+                    "log": str(log),
+                    "timed_out": False,
+                }
+
+            with (
+                patch("lab.runner.execute", configure),
+                patch("lab.runner.ensure_catch", return_value=root),
+                patch("lab.runner.compiler", return_value="fixture-compiler"),
+            ):
+                self.assertEqual(runner.configure_ide(root, first, spec)["outcome"], "ready")
+                self.assertEqual(runner.configure_ide(root, second, spec)["outcome"], "ready")
+
+            database = read_json(root / "build/intellisense/compile_commands.json")
+            self.assertEqual(len(database), 1)
+            self.assertEqual(Path(database[0]["file"]), second / "src/exercise.cpp")
+            self.assertIn("-std=c++20", database[0]["command"])
+            self.assertNotIn(".cache", database[0]["file"])
+
+    def test_ide_configuration_failure_does_not_publish_a_database(self):
+        spec = read_json(FIXTURE / "exercises/counter-fixture/spec.json")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "exercises/current"
+            source.mkdir(parents=True)
+            failure = {
+                "argv": ["cmake"],
+                "exit_status": 1,
+                "duration": 0.0,
+                "log": str(root / "configure.log"),
+                "timed_out": False,
+            }
+            with (
+                patch("lab.runner.execute", return_value=failure),
+                patch("lab.runner.ensure_catch", return_value=root),
+                patch("lab.runner.compiler", return_value="fixture-compiler"),
+            ):
+                result = runner.configure_ide(root, source, spec)
+            self.assertEqual(result["outcome"], "configuration_error")
+            self.assertFalse((root / "build/intellisense/compile_commands.json").exists())
+
+    def test_build_cache_and_parallelism_are_stable_and_bounded(self):
+        spec = read_json(FIXTURE / "exercises/counter-fixture/spec.json")
+        commands = []
+
+        def successful_until_discovery(argv, log, timeout=120, cwd=None):
+            commands.append(list(map(str, argv)))
+            atomic_text(
+                log, '{"tests": []}' if "--show-only=json-v1" in argv else "fixture compiler\n"
+            )
+            return {
+                "argv": list(map(str, argv)),
+                "exit_status": 0,
+                "duration": 0.0,
+                "log": str(log),
+                "timed_out": False,
+            }
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            with (
+                patch("lab.runner.execute", successful_until_discovery),
+                patch(
+                    "lab.runner.probe",
+                    return_value={"supported": True, "detail": "fixture library"},
+                ),
+                patch("lab.runner.ensure_catch", return_value=root),
+                patch("lab.runner.compiler", return_value="fixture-compiler"),
+                patch("lab.runner.os.cpu_count", return_value=12),
+            ):
+                runner.run_cpp(root, root, spec, "first-report", "debug")
+                runner.run_cpp(root, root, spec, "second-report", "debug")
+
+        configure = [command for command in commands if command[:2] == ["cmake", "--preset"]]
+        builds = [command for command in commands if command[:2] == ["cmake", "--build"]]
+        self.assertEqual(
+            configure[0][configure[0].index("-B") + 1], configure[1][configure[1].index("-B") + 1]
+        )
+        self.assertNotIn("first-report", builds[0][2])
+        self.assertEqual(builds[0][2], builds[1][2])
+        self.assertEqual(builds[0][-2:], ["--parallel", "4"])
+
+        spec["resource_limits"]["build_jobs"] = 2
+        with patch("lab.runner.os.cpu_count", return_value=12):
+            self.assertEqual(runner.build_jobs(spec), 2)
+        with patch("lab.runner.os.cpu_count", return_value=None):
+            self.assertEqual(runner.build_jobs(spec), 1)
+
     def test_zero_discovered_tests_are_never_success(self):
         spec = read_json(FIXTURE / "exercises/counter-fixture/spec.json")
         with tempfile.TemporaryDirectory() as temporary:

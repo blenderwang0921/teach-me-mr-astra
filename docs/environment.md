@@ -29,11 +29,26 @@ export CXX=/opt/homebrew/opt/llvm/bin/clang++
 
 Do not globally replace the system compiler to fix this project. For manual CMake work, put host-specific presets in ignored `CMakeUserPresets.json`. For lab CLI execution, select the compiler with `CXX`; its built-in profile names are fixed.
 
+## VS Code IntelliSense
+
+The workspace configures the Microsoft C/C++ extension to read
+`build/intellisense/compile_commands.json`. A successful `prepare --assign`
+refreshes that database for the active exercise using its live
+`exercises/<id>/` path; it does not point IntelliSense at immutable evidence or
+instructor sources. The configuration step does not compile or run the exercise.
+
+Run `./lab ide` to regenerate the database for an existing active exercise,
+including after framework changes make earlier validation evidence stale. This
+editor-only operation does not relax the ready checks used by `check` or
+completion. If VS Code retains stale results afterward, run **C/C++: Reset
+IntelliSense Database** from the Command Palette. Exercises remain in their real
+directories; there is intentionally no `current` symlink or second editable path.
+
 ## Profiles and limits
 
 `debug` and `release` differ in build type. `asan` enables address and undefined-behavior checks; `tsan` enables thread checks separately. Sanitizers instrument exercise source and tests. Catch2 itself uses its normal build configuration. Required profiles must compile and run a capability probe before testing; unavailable required profiles fail explicitly.
 
-Spec limits bound build parallelism, each test, and each command. Commands run in a process group; timeout kills the entire group. This is execution hygiene, not a sandbox for untrusted C++ or upstream repositories. Do not run untrusted exercises merely because a timeout exists. Resource limits do not currently impose a hard memory quota.
+Builds use the smallest of the host CPU count, four jobs, and the spec's build-job limit. Each test and command also has a spec-defined timeout. Commands run in a process group; timeout kills the entire group. This is execution hygiene, not a sandbox for untrusted C++ or upstream repositories. Do not run untrusted exercises merely because a timeout exists. Resource limits do not currently impose a hard memory quota.
 
 Linux CI targets Ubuntu 24.04 with Clang 18/GCC 14 and Python 3.11/3.14. The integration fixture exercises ASan+UBSan. TSan capability is probed, but real concurrency correctness requires a concurrency-specific exercise and tests; no such exercise is preassigned.
 
@@ -50,5 +65,8 @@ Linux CI targets Ubuntu 24.04 with Clang 18/GCC 14 and Python 3.11/3.14. The int
 
 The Catch2 pin identifies an annotated tag object. Resolve it with `^{commit}` before
 comparing it with HEAD. Fetch only when the pinned object is missing; verify the
-working tree on every use. A valid cache must work without GitHub access. The lab
-automatically selects installed Homebrew LLVM on macOS unless CXX overrides it.
+working tree on every use. A valid cache must work without GitHub access. CMake
+build directories are reused for the same compiler and profile, so later checks
+reuse unchanged Catch2 objects while each run keeps its own immutable source and
+evidence snapshot. The lab automatically selects installed Homebrew LLVM on macOS
+unless CXX overrides it.

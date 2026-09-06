@@ -27,5 +27,6 @@
   "ruff.path": [
     "${workspaceFolder}/.venv/bin/ruff"
   ],
-  "C_Cpp.clang_format_style": "file"
+  "C_Cpp.clang_format_style": "file",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/intellisense/compile_commands.json"
 }
