@@ -14,20 +14,23 @@ ROOT = Path(__file__).resolve().parents[1]
 SUFFIXES = {".py", ".cpp", ".hpp", ".h", ".cc", ".cxx"}
 
 
-def allowed(path, root=ROOT):
-    """Formatting is never permission to mutate evidence or a published contract."""
+def in_scope(path, root=ROOT):
+    """Reject protected trees and symlinks before expanding directories."""
     path = Path(path)
     if not path.is_absolute():
         path = root / path
     if path.is_symlink():
         return False
     resolved = path.resolve()
-    if not resolved.is_relative_to(root.resolve()) or not resolved.is_file():
+    if not resolved.is_relative_to(root.resolve()):
         return False
     relative = resolved.relative_to(root.resolve())
-    if any((root / Path(*relative.parts[:n])).is_symlink() for n in range(1, len(relative.parts))):
-        return False
-    if resolved.suffix not in SUFFIXES or relative.parts[0] not in {
+    for parent in path.parents:
+        if parent.resolve() == root.resolve():
+            break
+        if parent.is_symlink():
+            return False
+    if not relative.parts or relative.parts[0] not in {
         "tools",
         "templates",
         "exercises",
@@ -39,6 +42,17 @@ def allowed(path, root=ROOT):
         for part in relative.parts
     ):
         return False
+    return True
+
+
+def allowed(path, root=ROOT):
+    """Formatting is never permission to mutate evidence or a published contract."""
+    path = Path(path)
+    if not path.is_absolute():
+        path = root / path
+    if not in_scope(path, root) or not path.is_file() or path.suffix not in SUFFIXES:
+        return False
+    relative = path.resolve().relative_to(root.resolve())
     if relative.parts[0] in {"exercises", ".instructor"}:
         if len(relative.parts) < 3:
             return False
@@ -52,6 +66,27 @@ def allowed(path, root=ROOT):
         editable = Path(*relative.parts[2:]).as_posix() in spec["editable_paths"]
         return editable or not (root / ".instructor" / exercise_id / "ready.json").exists()
     return True
+
+
+def expand_paths(paths, root=ROOT):
+    """Explicit files fail closed; directories select eligible source files only."""
+    selected, skipped = set(), set()
+    for item in paths:
+        path = Path(item)
+        if not path.is_absolute():
+            path = root / path
+        if path.is_dir() and in_scope(path, root):
+            for candidate in path.rglob("*"):
+                if candidate.suffix in SUFFIXES and not candidate.is_dir():
+                    if allowed(candidate, root):
+                        selected.add(candidate.resolve())
+                    else:
+                        skipped.add(candidate)
+        elif allowed(path, root):
+            selected.add(path.resolve())
+        else:
+            raise RuntimeError(f"Refusing unsupported, missing, or protected path: {item}")
+    return sorted(selected), len(skipped)
 
 
 def patch_paths(event):
@@ -115,7 +150,7 @@ def format_paths(paths, check=False, root=ROOT):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "paths", nargs="*", type=Path, help="Explicit files; default: framework Python only"
+        "paths", nargs="*", type=Path, help="Files or directories; default: framework Python only"
     )
     parser.add_argument("--check", action="store_true")
     parser.add_argument(
@@ -129,15 +164,14 @@ def main(argv=None):
             event = json.load(sys.stdin)
             paths = patch_paths(event)
         else:
-            paths = args.paths or list((ROOT / "tools").rglob("*.py"))
-            rejected = [str(p) for p in paths if not allowed(p)]
-            if rejected:
-                raise RuntimeError(
-                    "Refusing unsupported, missing, or protected paths: " + ", ".join(rejected)
-                )
+            paths, skipped = expand_paths(args.paths or [ROOT / "tools"])
+            if not args.paths:
+                paths = [p for p in paths if p.suffix == ".py"]
         count = format_paths(paths, check=args.check)
         if not args.hook:
             print(f"Formatting {'checked' if args.check else 'applied'}: {count} file(s)")
+            if skipped:
+                print(f"Skipped protected source files: {skipped}")
         return 0
     except (OSError, ValueError, RuntimeError) as exc:
         if args.hook:

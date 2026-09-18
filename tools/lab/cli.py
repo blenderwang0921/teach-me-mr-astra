@@ -90,7 +90,8 @@ def parser():
     finish_parser.add_argument("file", type=Path, help="Completion bundle; see docs/state.md")
     finish_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
     format_parser = commands.add_parser(
-        "format", help="Format framework Python or explicit C++/Python files locally"
+        "format",
+        help="Format framework Python or explicit C++/Python files and directories locally",
     )
     format_parser.add_argument("paths", nargs="*", type=Path)
     format_parser.add_argument("--check", action="store_true")

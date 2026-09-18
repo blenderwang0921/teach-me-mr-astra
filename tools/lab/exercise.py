@@ -236,8 +236,26 @@ def _prepare(root, exercise_id):
     path, spec = load_exercise(root, exercise_id)
     teaching = instructor(root, exercise_id)
     instructions = validate("validation", read_json(teaching / "validation.json"))
-    contract = contract_hash(root, exercise_id)
     ready_path = teaching / "ready.json"
+    if not ready_path.exists():
+        # Finish shell-authored assets synchronously before hashing or snapshots.
+        from format_code import expand_paths, format_paths
+
+        try:
+            paths, _ = expand_paths([path, teaching], root)
+            # A missing publication marker does not imply untouched learner work.
+            # Preserve the workspace if any editable file differs from the skeleton.
+            preserve_workspace = False
+            for name in spec["editable_paths"]:
+                source, skeleton = path / name, teaching / "skeleton" / name
+                if not skeleton.is_file() or source.read_bytes() != skeleton.read_bytes():
+                    preserve_workspace = True
+            if preserve_workspace:
+                paths = [p for p in paths if not p.is_relative_to(path.resolve())]
+            format_paths(paths, root=root)
+        except (OSError, ValueError, RuntimeError) as exc:
+            raise LabError(f"Pre-publication formatting failed: {exc}") from exc
+    contract = contract_hash(root, exercise_id)
     if ready_path.exists():
         old = validate("ready", read_json(ready_path))
         if old["revision"] > spec["revision"] or (

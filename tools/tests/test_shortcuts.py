@@ -214,6 +214,64 @@ class ShortcutTests(WorkspaceTest):
 
 
 class FormattingTests(WorkspaceTest):
+    def test_directories_expand_deduplicate_and_preserve_published_assets(self):
+        paths, skipped = format_code.expand_paths([self.path, self.teaching], self.root)
+        self.assertIn((self.path / "src/counter.cpp").resolve(), paths)
+        self.assertIn((self.path / "tests/counter_test.cpp").resolve(), paths)
+        self.assertIn((self.teaching / "reference/src/counter.cpp").resolve(), paths)
+        self.assertEqual(skipped, 0)
+        self.assertEqual(
+            format_code.expand_paths([self.path, self.path / "src/counter.cpp"], self.root),
+            format_code.expand_paths([self.path], self.root),
+        )
+        self.prepare_mocked()
+        paths, skipped = format_code.expand_paths([self.path, self.teaching], self.root)
+        self.assertEqual(paths, [(self.path / "src/counter.cpp").resolve()])
+        self.assertGreater(skipped, 0)
+        with self.assertRaises(RuntimeError):
+            format_code.expand_paths([self.path / "tests/counter_test.cpp"], self.root)
+
+    def test_directory_inputs_reject_protected_missing_and_linked_trees(self):
+        (self.root / "tools").mkdir()
+        (self.root / "tools/linked").symlink_to(self.path, target_is_directory=True)
+        for path in [
+            self.root,
+            self.root / "evidence",
+            self.root / "tools/missing",
+            self.root / "tools/linked",
+            self.root / "tools/linked/src",
+        ]:
+            with self.subTest(path=path), self.assertRaises(RuntimeError):
+                format_code.expand_paths([path], self.root)
+
+    def test_prepare_formats_before_snapshots_and_skips_published_work(self):
+        source = self.path / "src/counter.cpp"
+        source.write_text("int fixture( ){return 0;}\n")
+        (self.teaching / "skeleton/src/counter.cpp").write_bytes(source.read_bytes())
+        seen = []
+
+        def run(root, path, spec, report_id, preset):
+            seen.append(source.read_text())
+            return self.fake_run(root, path, spec, report_id, preset)
+
+        with patch("lab.exercise.run_cpp", run):
+            exercise.prepare(self.root, EXERCISE)
+        self.assertTrue(seen)
+        self.assertTrue(all("fixture()" in text for text in seen))
+        with patch("format_code.format_paths", side_effect=AssertionError("Published assets")):
+            self.prepare_mocked()
+
+    def test_prepare_format_failure_blocks_before_cpp_execution(self):
+        self.planning()
+        with (
+            patch("format_code.format_paths", side_effect=RuntimeError("formatter unavailable")),
+            patch("lab.exercise.run_cpp") as run,
+        ):
+            with self.assertRaisesRegex(LabError, "Pre-publication formatting failed"):
+                exercise.prepare(self.root, EXERCISE)
+        run.assert_not_called()
+        self.assertEqual(state.load_session(self.root)["phase"], "blocked")
+
     def test_history_symlinks_and_published_assets_are_protected(self):
         self.prepare_mocked()
         self.assertTrue(format_code.allowed(self.path / "src/counter.cpp", self.root))

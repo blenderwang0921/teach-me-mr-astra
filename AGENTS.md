@@ -73,5 +73,7 @@ only when the pinned object is absent. Never rerun a full matrix to inspect a lo
 For time/usage stops, save a paused resume position and defer questions. Run history
 stays local and ignored; never delete it for Git noise. Archive only when requested.
 Formatting is local (`./lab format`, editor save, patch hook); avoid model-generated
-format-only rewrites. Format authored assets before prepare/check. See
+format-only rewrites. Prefer apply_patch for edits so its synchronous hook runs.
+Prepare auto-formats new unpublished assets before validation; check never rewrites
+learner work. See
 `docs/formatting.md` for hook limits and protected paths.
