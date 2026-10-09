@@ -114,7 +114,15 @@ Keep teaching rules concise and deterministic checks in Python. Add behavioral t
 
 ## Focused workspace
 
-Edit only the active `exercises/<id>/` workspace. VS Code hides generated run copies
+Open `current/README.md` for the question and `current/src/` to work on it.
+`current/` is a local relative symlink to `exercises/<id>/`, updated by lab state
+commands; `./lab status` or `./lab context` also repairs a missing or stale link.
+After completion it points to the last completed exercise for review until the
+next exercise is selected. Session state determines whether an exercise is active.
+No link is created before the first exercise. The link is ignored by Git; an
+existing real file or directory named `current` is preserved and reported as a conflict.
+Tests and `./lab format` continue to use the physical `exercises/<id>/` paths.
+VS Code hides generated run copies
 and instructor assets from Explorer and search, and marks evidence read-only.
 `check` defaults to the active exercise; `status --compact --json` omits report logs.
 On this Apple Silicon host the lab selects installed Homebrew LLVM unless `CXX`

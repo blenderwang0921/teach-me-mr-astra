@@ -6,6 +6,8 @@ __pycache__/
 /.cache/
 /CMakeUserPresets.json
 /compile_commands.json
+/current
+/.current-*/
 /learner/.write.lock
 /learner/.transaction.json
 *.tmp

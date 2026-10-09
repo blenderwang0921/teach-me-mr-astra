@@ -42,7 +42,15 @@ including after framework changes make earlier validation evidence stale. This
 editor-only operation does not relax the ready checks used by `check` or
 completion. If VS Code retains stale results afterward, run **C/C++: Reset
 IntelliSense Database** from the Command Palette. Exercises remain in their real
-directories; there is intentionally no `current` symlink or second editable path.
+directories. Open `current/README.md` for the question and `current/src/` for the
+same editable files through a fixed relative symlink. Lab state commands update
+this local, Git-ignored shortcut; `./lab status` and `./lab context` repair it even
+when validation evidence is stale. After completion it retains the last completed
+exercise until another is selected; session state determines whether one is active.
+Before the first exercise there is no shortcut. An existing real file or directory
+named `current` is preserved and reported as a conflict; a missing target is reported
+without creating a broken link. Tests, IntelliSense configuration, and `./lab format`
+continue to use physical `exercises/<id>/` paths.
 
 ## Profiles and limits
 

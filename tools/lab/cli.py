@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from . import exercise, runner, state, workflow
+from . import current, exercise, runner, state, workflow
 from .core import FRAMEWORK, LabError, read_json, validate, writer
 
 
@@ -133,70 +133,85 @@ def dispatch(args):
         return data, 2 if data["issues"] else 0
     with writer(root):
         recovered = state.recover(root)
-        if args.command == "init":
-            data = state.init(root)
-            code = 0
-        elif args.command == "status":
-            data = state.status(root)
-            code = 2 if data["integrity_issues"] else 0
-            if args.compact and data["last_report"]:
-                report = data["last_report"]
-                data["last_report"] = {
-                    key: report[key]
-                    for key in (
-                        "id",
-                        "outcome",
-                        "exit_status",
-                        "exercise_revision",
-                        "source_snapshot",
-                    )
-                }
-        elif args.command == "state":
-            data, code = state.apply(root, read_json(args.file)), 0
-        elif args.command == "context":
-            data = workflow.context(root)
-            code = 2 if data["integrity_issues"] else 0
-        elif args.command == "ide":
-            data = workflow.configure_ide(root)
-            code = data["exit_status"]
-        elif args.command == "session":
-            data = workflow.transition(
-                root,
-                args.phase,
-                args.expected_version,
-                args.next_action,
-                args.exercise,
-                args.reason,
-            )
-            code = 0
-        elif args.command == "finish":
-            data, code = workflow.finish(root, read_json(args.file)), 0
-        elif args.command == "prepare":
-            if args.assign:
-                if args.expected_version is None:
-                    raise LabError("prepare --assign requires --expected-version from context")
-                data = workflow.prepare_and_assign(root, args.id, args.expected_version)
-            else:
-                state.load_session(root)
-                data = exercise.prepare(root, args.id)
-            code = data["exit_status"]
-        elif args.command == "check":
-            session = state.load_session(root)
-            exercise_id = args.id or session["current_exercise_id"]
-            if not exercise_id:
-                raise LabError("No active exercise; use check <id> or start a learning session")
-            data = exercise.check(root, exercise_id, args.preset)
-            code = data["exit_status"]
+        if (root / "learner/session.json").exists():
+            current.sync(root)
+        try:
+            data, code = dispatch_locked(args, root)
+        finally:
+            shortcut = current.sync(root)
+        return {**data, "recovered_transaction": recovered, "current_workspace": shortcut}, code
+
+
+def dispatch_locked(args, root):
+    """Execute a command while dispatch holds the workspace writer lock."""
+    if args.command == "init":
+        data = state.init(root)
+        code = 0
+    elif args.command == "status":
+        data = state.status(root)
+        code = 2 if data["integrity_issues"] else 0
+        if args.compact and data["last_report"]:
+            report = data["last_report"]
+            data["last_report"] = {
+                key: report[key]
+                for key in (
+                    "id",
+                    "outcome",
+                    "exit_status",
+                    "exercise_revision",
+                    "source_snapshot",
+                )
+            }
+    elif args.command == "state":
+        data, code = state.apply(root, read_json(args.file)), 0
+    elif args.command == "context":
+        data = workflow.context(root)
+        code = 2 if data["integrity_issues"] else 0
+    elif args.command == "ide":
+        data = workflow.configure_ide(root)
+        code = data["exit_status"]
+    elif args.command == "session":
+        data = workflow.transition(
+            root,
+            args.phase,
+            args.expected_version,
+            args.next_action,
+            args.exercise,
+            args.reason,
+        )
+        code = 0
+    elif args.command == "finish":
+        data, code = workflow.finish(root, read_json(args.file)), 0
+    elif args.command == "prepare":
+        if args.assign:
+            if args.expected_version is None:
+                raise LabError("prepare --assign requires --expected-version from context")
+            data = workflow.prepare_and_assign(root, args.id, args.expected_version)
         else:
-            data = ci(root)
-            code = data["exit_status"]
-        return {**data, "recovered_transaction": recovered}, code
+            state.load_session(root)
+            data = exercise.prepare(root, args.id)
+        code = data["exit_status"]
+    elif args.command == "check":
+        session = state.load_session(root)
+        exercise_id = args.id or session["current_exercise_id"]
+        if not exercise_id:
+            raise LabError("No active exercise; use check <id> or start a learning session")
+        data = exercise.check(root, exercise_id, args.preset)
+        code = data["exit_status"]
+    else:
+        data = ci(root)
+        code = data["exit_status"]
+    return data, code
 
 
 def summarize(command, data, code):
     if "error" in data:
         return f"Error: {data['error']}"
     lines = [f"{command}: {'ok' if code == 0 else 'failed'} (exit {code})"]
+    if data.get("current_workspace"):
+        shortcut = data["current_workspace"]
+        purpose = "active exercise" if shortcut["active"] else "last completed exercise"
+        lines.append(f"Workspace: current/ -> {shortcut['target']}/ ({purpose})")
     if "session" in data:
         session = data["session"]
         lines += [
@@ -204,7 +219,7 @@ def summarize(command, data, code):
             f"Exercise: {session['current_exercise_id'] or 'none'} | revision: {session['exercise_revision']}",
             f"Next: {session['next_action']}",
         ]
-        if session["current_exercise_id"]:
+        if session["current_exercise_id"] and not data.get("current_workspace"):
             lines.append(
                 f"Workspace: exercises/{session['current_exercise_id']}/ (edit here, never evidence/)"
             )

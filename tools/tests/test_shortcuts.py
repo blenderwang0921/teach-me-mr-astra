@@ -8,7 +8,7 @@ import sys
 from unittest.mock import patch
 
 from test_lab import EXERCISE, WorkspaceTest
-from lab import exercise, state, workflow
+from lab import cli, exercise, state, workflow
 from lab.core import FRAMEWORK, LabError, read_json, tree_hash
 import format_code
 
@@ -97,6 +97,18 @@ class ShortcutTests(WorkspaceTest):
         self.assertEqual(result["session"]["phase"], "planning")
         self.assertEqual(result["session"]["completed_exercises"][0]["report_id"], report["id"])
         self.assertEqual(state.status(self.root)["integrity_issues"], [])
+
+    def test_cli_finish_keeps_current_for_review(self):
+        report = self.passing()
+        bundle_path = self.root / "completion.json"
+        bundle_path.write_text(json.dumps(self.bundle(report)))
+        result, code = cli.dispatch(
+            cli.parser().parse_args(["--root", str(self.root), "finish", str(bundle_path)])
+        )
+        self.assertEqual(code, 0)
+        self.assertIsNone(result["session"]["current_exercise_id"])
+        self.assertFalse(result["current_workspace"]["active"])
+        self.assertEqual((self.root / "current").resolve(), self.path.resolve())
 
     def test_finish_rejections_leave_no_partial_review_or_state(self):
         report = self.passing()

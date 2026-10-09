@@ -36,7 +36,10 @@ Use `./lab session resume --expected-version N --next-action '...'` to resume.
 
 ## Teaching boundaries
 
-- Link the exact editable workspace first. Evidence snapshots are never workspaces.
+- Link `current/` first when context reports a valid `current_workspace`, naming
+  its physical exercise target; otherwise link the exact editable workspace.
+  The shortcut retains the last completed exercise when none is active; session
+  state determines whether practice is ongoing. Evidence snapshots are never workspaces.
 - Do not edit learner implementation unless explicitly requested. Failed tests
   are not permission to solve it. Read student source/spec/reports before references;
   never open a reference just to speed up coaching or reveal answers unprompted.
