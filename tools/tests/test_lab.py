@@ -434,6 +434,16 @@ class ProcessTests(unittest.TestCase):
             for source in [first, second]:
                 (source / "src").mkdir(parents=True)
                 atomic_text(source / "src/exercise.cpp", "int exercise() { return 0; }\n")
+            write_json(
+                root / ".vscode/c_cpp_properties.json",
+                {
+                    "version": 4,
+                    "configurations": [
+                        {"name": "Lab", "defines": ["KEEP_ME"]},
+                        {"name": "Other", "compilerPath": "other-compiler"},
+                    ],
+                },
+            )
 
             def configure(argv, log, timeout=120, cwd=None):
                 build = Path(argv[argv.index("-B") + 1])
@@ -479,6 +489,13 @@ class ProcessTests(unittest.TestCase):
             self.assertEqual(Path(database[0]["file"]), second / "src/exercise.cpp")
             self.assertIn("-std=c++20", database[0]["command"])
             self.assertNotIn(".cache", database[0]["file"])
+            properties = read_json(root / ".vscode/c_cpp_properties.json")
+            lab = properties["configurations"][0]
+            self.assertEqual(lab["compilerPath"], "fixture-compiler")
+            self.assertEqual(lab["cppStandard"], "c++20")
+            self.assertEqual(lab["includePath"], [str(second.resolve() / "include")])
+            self.assertEqual(lab["defines"], ["KEEP_ME"])
+            self.assertEqual(properties["configurations"][1]["compilerPath"], "other-compiler")
 
     def test_ide_configuration_failure_does_not_publish_a_database(self):
         spec = read_json(FIXTURE / "exercises/counter-fixture/spec.json")

@@ -291,6 +291,28 @@ def configure_ide(root, source, spec):
         filtered = [entry for entry in database if belongs_to_exercise(entry)]
         if not filtered:
             raise LabError("CMake produced no compile commands for the active exercise")
+        # Headers opened before their translation unit need a base configuration.
+        # Let the selected compiler supply system includes rather than hardcoding SDKs.
+        properties = contained(root, ".vscode/c_cpp_properties.json")
+        configuration = (
+            json.loads(properties.read_text())
+            if properties.exists()
+            else {"configurations": [], "version": 4}
+        )
+        configurations = configuration["configurations"]
+        lab_configuration = next(
+            (item for item in configurations if item.get("name") == "Lab"), None
+        )
+        if lab_configuration is None:
+            lab_configuration = {"name": "Lab"}
+            configurations.append(lab_configuration)
+        lab_configuration.update(
+            compilerPath=str(selected_compiler),
+            cppStandard=f"c++{spec['cpp_standard']}",
+            compileCommands="${workspaceFolder}/build/intellisense/compile_commands.json",
+            includePath=[str(source_root / "include")],
+        )
+        atomic_text(properties, json_text(configuration))
         atomic_text(output, json_text(filtered))
     except (KeyError, OSError, ValueError, TypeError, LabError) as exc:
         result.update(outcome="compile_database_error", error=str(exc))

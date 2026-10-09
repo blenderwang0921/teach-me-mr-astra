@@ -36,6 +36,12 @@ The workspace configures the Microsoft C/C++ extension to read
 refreshes that database for the active exercise using its live
 `exercises/<id>/` path; it does not point IntelliSense at immutable evidence or
 instructor sources. The configuration step does not compile or run the exercise.
+It also updates the local `Lab` configuration in `.vscode/c_cpp_properties.json`
+with the selected compiler, exercise C++ standard, and physical include directory.
+This base configuration supports headers opened on their own, including through
+`current/`, before IntelliSense associates them with a compiled source file.
+System header paths are discovered from the compiler rather than hardcoded.
+Other named configurations and unrelated `Lab` fields are preserved.
 
 Run `./lab ide` to regenerate the database for an existing active exercise,
 including after framework changes make earlier validation evidence stale. This

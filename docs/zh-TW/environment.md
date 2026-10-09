@@ -32,6 +32,7 @@ export CXX=/opt/homebrew/opt/llvm/bin/clang++
 ## VS Code IntelliSense
 
 工作區會設定 Microsoft C/C++ 擴充套件讀取 `build/intellisense/compile_commands.json`。成功執行 `prepare --assign` 後，系統會使用目前題目的實際 `exercises/<id>/` 路徑更新這份資料庫；IntelliSense 不會指向不可變的 evidence 或 instructor 原始碼。這個設定步驟不會編譯或執行題目。
+此步驟也會更新本機 `.vscode/c_cpp_properties.json` 的 `Lab` 設定，指定所選編譯器、題目的 C++ 標準與實體 include 目錄。這份備援設定支援單獨開啟的標頭檔，包括透過 `current/` 開啟、尚未被 IntelliSense 關聯到編譯來源檔的情況。系統標頭路徑由編譯器提供，不寫死在設定中。其他具名設定與 `Lab` 中無關的欄位會保留。
 
 若既有 active exercise 需要重新產生資料庫，請執行 `./lab ide`；即使框架變更已使先前的驗證證據過期，仍可使用此指令。這項僅供編輯器使用的操作不會放寬 `check` 或完成流程的 ready 檢查。如果 VS Code 之後仍保留過期結果，請從命令選擇區執行 **C/C++: Reset IntelliSense Database**。題目仍位於原本的實體目錄。開啟 `current/README.md` 閱讀題目、`current/src/` 作答，即可透過固定的相對符號連結存取同一份檔案。Lab 狀態指令會更新這個僅供本機使用、由 Git 忽略的入口；即使驗證紀錄過期，`./lab status` 和 `./lab context` 也能修復連結。完成後會保留最近完成的題目，直到選定下一題；是否有進行中題目仍以 session 狀態為準。第一題之前不會建立入口。如果 `current` 已是實體檔案或資料夾，系統會保留並回報衝突；目標不存在時會回報問題，不建立失效連結。測試、IntelliSense 設定與 `./lab format` 仍使用實體 `exercises/<id>/` 路徑。
 
