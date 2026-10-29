@@ -16,7 +16,16 @@ __pycache__/
 
 # Local immutable run history: preserved on disk, excluded from normal changes.
 /evidence/run-*/
-/learner/artifacts/*-update.json
-/learner/artifacts/handoff-*.json
-/.instructor/*/ready.json
+
+# Private learner data and generated exercises stay local; back them up separately.
+/learner/*
+!/learner/artifacts/
+!/learner/reviews/
+/learner/artifacts/*
+/learner/reviews/*
+!/learner/**/.gitkeep
+/exercises/*
+!/exercises/.gitkeep
+/.instructor/*
+!/.instructor/.gitkeep
 /.vscode/c_cpp_properties.json

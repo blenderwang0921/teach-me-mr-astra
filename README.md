@@ -77,7 +77,7 @@ Exit codes: **0** success; **1** student compilation/test failure or test timeou
 
 ## State, evidence, and recovery
 
-This is a **private learning repository**. Track learner answers, exercises, and instructor assets in private Git history. Generated `evidence/run-*/` snapshots remain on disk but are ignored by default to keep Changes focused. `.instructor/` reduces accidental answer exposure; it is not a security boundary. Export a clean framework copy before publishing publicly. The tools never commit, push, create an external repository, or send messages.
+Git tracks only the **framework** (tools, templates, schemas, docs, teaching guides). Learner records (`learner/`), generated exercises (`exercises/`), instructor assets including reference solutions (`.instructor/`), and `evidence/run-*/` snapshots are private, stay on disk, and are ignored by Git. `lab init` recreates empty learner state in a fresh clone. Back up private data separately, for example with a private repository or an archive of those directories; never force-add it to the framework repository. The tools never commit, push, create an external repository, or send messages.
 
 Full logs live in ignored `reports/`; immutable run snapshots and compact summaries live in locally retained, ignored `evidence/<report-id>/`. Raw learner explanations belong in `learner/artifacts/`. Evidence references must point to durable files, not mutable exercise files or disposable logs. Do not delete referenced evidence. The append-only observation log can be corrected by adding a new entry with `supersedes`.
 
