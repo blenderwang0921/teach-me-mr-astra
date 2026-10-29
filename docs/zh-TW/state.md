@@ -60,10 +60,13 @@ Preparing/practicing/reviewing 需要練習識別碼與修訂版。Practicing/re
 ./lab session paused --expected-version N --reason 'Time limit' --next-action 'Resume the saved review.'
 ./lab session resume --expected-version N --next-action 'Continue the saved review.'
 ./lab finish /tmp/completion.json
+./lab drop --expected-version N --reason 'Learner words, verbatim'
 ```
 
 `prepare --assign` 需要已編寫的資產及通過的語意審查。它從 planning 進入 preparing、執行既有發布門檻，只有成功後才進入 practicing。失敗時保留 preparing/blocked 的恢復位置。
 
 完成資料包為 `{ "schema_version": 1, "expected_version": N, "review": REVIEW, "evidence": [OBSERVATION] }`，使用 `review.schema.json` 與 `evidence.schema.json`。先將原始回答儲存在 learner/artifacts 並建立參照。審查包含英文說明摘要與具體下一步行動。`finish` 建立工作階段替換內容，並以原子方式提交全部紀錄；它要求非空證據陣列、相符修訂版、持久答案參照、仍為最新的預設通過結果、有效就緒標記，以及未變動的原始碼與契約。已有說明時，可直接從 practicing 完成；適用的完成門檻與離開 reviewing 時相同。版本只遞增一次。舊有 `state apply` 仍可使用，包括個人資料變更與缺陷紀錄。
 
-框架變更可能讓歷史任務的現行就緒標記過期。保留完成紀錄及其快照；不要重新發布舊修訂版來掩飾變更。下一個新練習會以新框架驗證。完整 `ci` 仍需要有效的現行就緒契約；它不是例行恢復教學的指令。
+`drop` 會在不完成的情況下結束目前練習（practicing、reviewing 或 blocked）。它將原始理由儲存至 `learner/artifacts/ID-rREV-dropped-reason.txt`、寫入審查 `learner/reviews/ID-rREV-dropped.json`，並在同一筆交易中回到 planning。完成歷史不變；`current/` 會退回最後一個完成的練習。原始的 `state apply` 也只有在包含目前修訂版的審查時，才能不經完成就從 practicing 回到 planning。
+
+契約雜湊涵蓋提供的檔案、教師資產及 C++ 建置檔（`CMakeLists.txt`、`CMakePresets.json`、`cmake/LabExercise.cmake`）。Lab 的 Python、schema 與 Python 相依套件不屬於契約，因此工具修正不會讓已發布練習失效。C++ 建置變更可能讓歷史任務的現行就緒標記過期。保留完成紀錄及其快照；不要重新發布舊修訂版來掩飾變更。下一個新練習會以新框架驗證。完整 `ci` 仍需要有效的現行就緒契約；它不是例行恢復教學的指令。

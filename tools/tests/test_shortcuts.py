@@ -132,7 +132,7 @@ class ShortcutTests(WorkspaceTest):
 
     def test_plain_practicing_to_planning_cannot_skip_completion(self):
         self.passing()
-        with self.assertRaisesRegex(LabError, "completed review"):
+        with self.assertRaisesRegex(LabError, "completed or dropped review"):
             self.transition("planning", current_exercise_id=None, exercise_revision=None)
 
     def test_prepare_assign_checks_version_then_assigns_only_on_success(self):
@@ -333,3 +333,35 @@ class FormattingTests(WorkspaceTest):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, "")
+
+    def test_drop_ends_exercise_without_completion(self):
+        self.planning()
+        self.prepare_mocked()
+        self.transition("practicing")
+        version = state.load_session(self.root)["version"]
+        with self.assertRaisesRegex(LabError, "completed or dropped review"):
+            self.transition("planning", current_exercise_id=None, exercise_revision=None)
+        result = workflow.drop(self.root, version, "這題太無聊了", "Author a new exercise.")
+        session = result["session"]
+        self.assertEqual(session["phase"], "planning")
+        self.assertIsNone(session["current_exercise_id"])
+        self.assertEqual(session["completed_exercises"], [])
+        review = read_json(self.root / f"learner/reviews/{EXERCISE}-r1-dropped.json")
+        self.assertEqual(review["learner_explanation"], "這題太無聊了")
+        self.assertEqual(state.status(self.root)["integrity_issues"], [])
+        with self.assertRaisesRegex(LabError, "Drop requires"):
+            workflow.drop(self.root, session["version"], "again", "Next.")
+
+    def test_lab_tooling_changes_keep_contract_hash(self):
+        framework = self.root / "framework"
+        for relative in ["CMakeLists.txt", "CMakePresets.json", "cmake/LabExercise.cmake"]:
+            (framework / relative).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(FRAMEWORK / relative, framework / relative)
+        (framework / "tools/lab").mkdir(parents=True)
+        with patch("lab.exercise.FRAMEWORK", framework):
+            before = exercise.contract_hash(self.root, EXERCISE)
+            (framework / "tools/lab/extra.py").write_text("# tooling change\n")
+            self.assertEqual(exercise.contract_hash(self.root, EXERCISE), before)
+            with (framework / "cmake/LabExercise.cmake").open("a") as stream:
+                stream.write("\n# build change\n")
+            self.assertNotEqual(exercise.contract_hash(self.root, EXERCISE), before)

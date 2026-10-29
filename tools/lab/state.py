@@ -245,7 +245,12 @@ def apply(root, update):
         (x["id"], x["revision"], x["report_id"]) for x in session["completed_exercises"]
     }
     if before == "practicing" and after == "planning" and not new_completed - old_completed:
-        raise LabError("Leaving practicing for planning requires a completed review")
+        # Dropping an unfinished exercise is allowed only with a review recording why.
+        dropped = (previous["current_exercise_id"], previous["exercise_revision"])
+        if not any(
+            (r["exercise_id"], r["exercise_revision"]) == dropped for r in update.get("reviews", [])
+        ):
+            raise LabError("Leaving practicing for planning requires a completed or dropped review")
     if len({(x[0], x[1]) for x in new_completed}) != len(session["completed_exercises"]):
         raise LabError("Completed exercise revisions must be unique")
     if not old_completed <= new_completed:

@@ -71,6 +71,7 @@ step, or another meaningful need for fresh context.
 ./lab session paused --expected-version N --reason 'Time limit' --next-action 'Resume the saved review.'
 ./lab session resume --expected-version N --next-action 'Continue the saved review.'
 ./lab finish /tmp/completion.json
+./lab drop --expected-version N --reason 'Learner words, verbatim'
 ```
 
 `prepare --assign` requires authored assets and approved semantic review. It enters
@@ -88,7 +89,18 @@ from practicing directly when the explanation is already available; the same
 completion gates apply as when leaving reviewing. It increments the version once.
 Legacy `state apply` remains available, including for profile changes and defects.
 
-A framework change can make historical live ready markers stale. Preserve completed
-records and their snapshots; do not republish an old revision to disguise the change.
-The next new exercise is validated against the new framework. Full `ci` still
+`drop` ends the active exercise (practicing, reviewing or blocked) without completion.
+It saves the raw reason to `learner/artifacts/ID-rREV-dropped-reason.txt`, writes the
+review `learner/reviews/ID-rREV-dropped.json`, and returns to planning in one
+transaction. Completion history is unchanged; `current/` falls back to the last
+completed exercise. A raw `state apply` may also leave practicing for planning
+without completion only when it includes a review of the current revision.
+
+Contract hashes cover provided files, instructor assets and the C++ build files
+(`CMakeLists.txt`, `CMakePresets.json`, `cmake/LabExercise.cmake`). Lab Python,
+schemas and Python dependencies are not part of a contract, so tooling fixes do not
+invalidate published exercises. A C++ build change can make historical live ready
+markers stale. Preserve completed records and their snapshots; do not republish an
+old revision to disguise the change. The next new exercise is validated against the
+new framework. Full `ci` still
 requires live ready contracts; it is not a routine teaching-resume command.

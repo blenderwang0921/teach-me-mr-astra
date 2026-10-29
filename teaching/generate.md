@@ -3,6 +3,14 @@
 Use goals, recent observations and `next_action` from `context`. Choose one principal
 objective within the learner's time budget; no fixed curriculum or upstream imports.
 
+Variety and size: look at the last three `completed_exercises` (and dropped reviews).
+Do not use the same scenario family (e.g. command budgets/windows) more than twice in
+a row; `next_action` is a suggestion, not a mandate to add one more constraint. Size the
+task to `time_budget`: when it allows, prefer a multi-method component with real design
+choices (data-structure selection, invariants, tradeoffs) over a single predicate.
+Keep the README short: scenario, API, plain rule bullets, one worked example, how to
+check. Put exhaustive edge cases in tests, not in legalistic prose.
+
 1. Copy a suitable `templates/{implementation,debugging}/exercise` into a NEW
    `exercises/ID` and its `instructor` into `.instructor/ID`. Never overwrite work.
 2. Replace all placeholders. Define a consequential scenario, exact requirements,

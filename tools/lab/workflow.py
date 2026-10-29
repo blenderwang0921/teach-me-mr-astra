@@ -1,7 +1,7 @@
 """Compact teaching context and guarded workflow shortcuts."""
 
 from . import exercise, runner, state
-from .core import LabError, contained, read_json, tree_hash, validate
+from .core import LabError, atomic_text, contained, read_json, tree_hash, validate
 
 ROUTES = {
     "onboarding": "teaching/interview.md",
@@ -182,6 +182,58 @@ def finish(root, bundle):
             "session": session,
             "reviews": [review],
             "evidence": bundle["evidence"],
+        },
+    )
+
+
+def drop(root, expected_version, reason, next_action):
+    """End the active exercise without completion; the raw reason is kept as evidence."""
+    session = state.load_session(root)
+    if session["version"] != expected_version:
+        raise LabError(
+            f"State conflict: expected version {expected_version}, current {session['version']}"
+        )
+    if session["phase"] not in {"practicing", "reviewing", "blocked"}:
+        raise LabError(
+            "Drop requires practicing, reviewing, or blocked; resume a paused session first"
+        )
+    exercise_id, revision = session["current_exercise_id"], session["exercise_revision"]
+    if not exercise_id:
+        raise LabError("No active exercise to drop")
+    name = f"{exercise_id}-r{revision}-dropped"
+    artifact = f"learner/artifacts/{name}-reason.txt"
+    if contained(root, f"learner/reviews/{name}.json").exists():
+        raise LabError(f"Exercise revision was already dropped: {name}")
+    # An unreferenced reason left by a failed attempt may be replaced.
+    atomic_text(contained(root, artifact), reason.rstrip("\n") + "\n")
+    session.update(
+        version=expected_version + 1,
+        phase="planning",
+        current_exercise_id=None,
+        exercise_revision=None,
+        last_report_id=None,
+        pending_questions=[],
+        resume_phase=None,
+        reason=None,
+        next_action=next_action,
+    )
+    review = {
+        "schema_version": 1,
+        "id": name,
+        "exercise_id": exercise_id,
+        "exercise_revision": revision,
+        "summary": "Exercise dropped without completion at the learner's request.",
+        "learner_explanation": reason,
+        "evidence_refs": [artifact],
+        "next_action": next_action,
+    }
+    return state.apply(
+        root,
+        {
+            "schema_version": 1,
+            "expected_version": expected_version,
+            "session": session,
+            "reviews": [review],
         },
     )
 

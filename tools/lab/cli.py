@@ -84,6 +84,15 @@ def parser():
     session_parser.add_argument("--exercise")
     session_parser.add_argument("--reason")
     session_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
+    drop_parser = commands.add_parser(
+        "drop", help="End the active exercise without completion, recording the learner's reason"
+    )
+    drop_parser.add_argument("--expected-version", type=int, required=True)
+    drop_parser.add_argument("--reason", required=True, help="Learner's raw reason, verbatim")
+    drop_parser.add_argument(
+        "--next-action", default="Choose and author the next exercise.", help="Planning next step"
+    )
+    drop_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
     finish_parser = commands.add_parser(
         "finish", help="Atomically record an authored review, observations, and completion"
     )
@@ -179,6 +188,9 @@ def dispatch_locked(args, root):
             args.exercise,
             args.reason,
         )
+        code = 0
+    elif args.command == "drop":
+        data = workflow.drop(root, args.expected_version, args.reason, args.next_action)
         code = 0
     elif args.command == "finish":
         data, code = workflow.finish(root, read_json(args.file)), 0

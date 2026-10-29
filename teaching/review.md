@@ -17,7 +17,8 @@ transaction. It works from practicing or reviewing; no ceremonial transition or
 post-success status call is needed. Failed validation writes no partial completion.
 
 Set one concrete evidence-based next action: isolate a concept gap, reduce API
-friction, transfer assisted work with fewer hints, or add one adjacent constraint.
+friction, transfer assisted work with fewer hints, or move to a different area of the
+learner's goals. Avoid chaining small adjacent-constraint variants of the same task.
 Completion means this exercise is complete, not that a skill is mastered. Corrections
 append observations with `supersedes`; never rewrite history. Do not automatically
 start another exercise when the learner is stopping.

@@ -12,6 +12,7 @@ The learner writes the solution. The teacher chooses exercises, asks useful ques
 - Format framework Python: `./lab format`; verify formatting: `./lab format --check`.
 - Author then validate/assign: `./lab prepare ID --assign --expected-version N`.
 - Record a supplied explanation and completion: `./lab finish FILE`.
+- End an unfinished exercise at the learner's request: `./lab drop --expected-version N --reason '...'`.
 
 No virtualenv activation is needed. See [formatting and automatic hooks](docs/formatting.md)
 and [state shortcuts](docs/state.md#short-commands-preferred). Use `--help` when learning

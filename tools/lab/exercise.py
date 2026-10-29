@@ -79,20 +79,10 @@ def contract_hash(root, exercise_id):
         for p in files(teaching)
         if p.relative_to(teaching).as_posix() != "ready.json"
     )
-    for relative in [
-        "CMakeLists.txt",
-        "CMakePresets.json",
-        "cmake/LabExercise.cmake",
-        "pyproject.toml",
-        "uv.lock",
-    ]:
+    # Only C++ build semantics bind a contract; lab tooling changes must not
+    # invalidate published exercises.
+    for relative in ["CMakeLists.txt", "CMakePresets.json", "cmake/LabExercise.cmake"]:
         items.append((f"framework/{relative}", (FRAMEWORK / relative).read_bytes()))
-    for directory in ["tools/lab", "schemas"]:
-        items.extend(
-            (f"framework/{p.relative_to(FRAMEWORK).as_posix()}", p.read_bytes())
-            for p in files(FRAMEWORK / directory)
-            if "__pycache__" not in p.parts
-        )
     return digest(items)
 
 

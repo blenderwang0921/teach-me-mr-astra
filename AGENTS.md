@@ -60,6 +60,9 @@ Use `./lab prepare ID --assign --expected-version N` after authoring and semanti
 review. It validates and assigns only on success. At most two automatic generation
 repairs; then record blocked and discuss a smaller task.
 
+If the learner asks to end an unfinished exercise, use `./lab drop --expected-version N
+--reason '<their words>'`; do not fake a completion.
+
 Save raw answers in `learner/artifacts/`. Use `./lab finish FILE` for an authored
 completion bundle (see `docs/state.md`): evidence, review and completion commit
 atomically, including from practicing. Other structured changes use `session` or
